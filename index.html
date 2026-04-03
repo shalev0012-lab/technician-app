@@ -1,659 +1,1045 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repair Manager</title>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Firebase (upgrade to production SDK and host via HTTP server, not file://) -->
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🛠️ TechQueue — ניהול תורים ותקלות</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f0f4f8;
+  --surface:#ffffff;
+  --surface-hover:#f8fafc;
+  --primary:#3b82f6;
+  --primary-light:#dbeafe;
+  --primary-dark:#1d4ed8;
+  --accent:#8b5cf6;
+  --accent-light:#ede9fe;
+  --success:#10b981;
+  --success-light:#d1fae5;
+  --warning:#f59e0b;
+  --warning-light:#fef3c7;
+  --danger:#ef4444;
+  --danger-light:#fee2e2;
+  --text:#1e293b;
+  --text-secondary:#64748b;
+  --text-muted:#94a3b8;
+  --border:#e2e8f0;
+  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
+  --shadow:0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg:0 12px 40px rgba(0,0,0,0.1);
+  --shadow-glow:0 0 30px rgba(59,130,246,0.15);
+  --radius:16px;
+  --radius-sm:10px;
+  --radius-xs:6px;
+  --transition:0.25s cubic-bezier(0.4,0,0.2,1);
+}
+body{
+  font-family:'Heebo',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;
+  top:-50%;right:-30%;
+  width:80vw;height:80vw;
+  background:radial-gradient(circle,rgba(59,130,246,0.06) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+body::after{
+  content:'';
+  position:fixed;
+  bottom:-40%;left:-20%;
+  width:60vw;height:60vw;
+  background:radial-gradient(circle,rgba(139,92,246,0.05) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── Header ── */
+.header{
+  background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 50%,#7c3aed 100%);
+  padding:28px 32px;
+  position:sticky;top:0;z-index:100;
+  box-shadow:0 4px 30px rgba(37,99,235,0.25);
+}
+.header-inner{
+  max-width:1400px;margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+}
+.logo{display:flex;align-items:center;gap:14px}
+.logo-icon{
+  width:50px;height:50px;
+  background:rgba(255,255,255,0.15);
+  backdrop-filter:blur(10px);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;
+  border:1px solid rgba(255,255,255,0.2);
+}
+.logo h1{
+  font-family:'Rubik',sans-serif;
+  font-size:24px;font-weight:700;color:#fff;
+  letter-spacing:-0.5px;
+}
+.logo p{font-size:13px;color:rgba(255,255,255,0.7);font-weight:300}
+.header-stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat-chip{
+  background:rgba(255,255,255,0.12);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:50px;
+  padding:8px 18px;
+  color:#fff;font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:6px;
+  transition:var(--transition);
+}
+.stat-chip:hover{background:rgba(255,255,255,0.2)}
+.stat-chip .num{font-weight:700;font-size:16px}
+
+/* ── Main Layout ── */
+.main{
+  max-width:1400px;margin:0 auto;
+  padding:24px 20px 60px;
+  position:relative;z-index:1;
+}
+
+/* ── Tabs ── */
+.tabs{
+  display:flex;gap:6px;
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:6px;
+  box-shadow:var(--shadow-sm);
+  margin-bottom:24px;
+  border:1px solid var(--border);
+  overflow-x:auto;
+}
+.tab{
+  flex:1;min-width:120px;
+  padding:12px 16px;
+  border-radius:var(--radius-sm);
+  border:none;background:transparent;
+  font-family:'Heebo',sans-serif;
+  font-size:14px;font-weight:500;
+  color:var(--text-secondary);
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  white-space:nowrap;
+}
+.tab:hover{background:var(--bg);color:var(--text)}
+.tab.active{
+  background:var(--primary);
+  color:#fff;
+  box-shadow:0 4px 15px rgba(59,130,246,0.3);
+  font-weight:600;
+}
+.tab .badge{
+  background:rgba(255,255,255,0.25);
+  border-radius:50px;padding:2px 8px;
+  font-size:11px;font-weight:700;
+}
+.tab:not(.active) .badge{
+  background:var(--border);
+  color:var(--text-secondary);
+}
+
+/* ── Content Panels ── */
+.panel{display:none;animation:fadeUp 0.35s ease}
+.panel.active{display:block}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+/* ── Add Form ── */
+.form-card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:28px;
+  box-shadow:var(--shadow);
+  border:1px solid var(--border);
+  margin-bottom:24px;
+  position:relative;
+  overflow:hidden;
+}
+.form-card::before{
+  content:'';position:absolute;
+  top:0;right:0;left:0;height:4px;
+  background:linear-gradient(90deg,var(--primary),var(--accent));
+}
+.form-title{
+  font-family:'Rubik',sans-serif;
+  font-size:18px;font-weight:600;
+  margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.form-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:16px;
+}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{
+  font-size:12px;font-weight:600;
+  color:var(--text-secondary);
+  text-transform:uppercase;
+  letter-spacing:0.5px;
+}
+.field input,.field select,.field textarea{
+  padding:12px 14px;
+  border:2px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-family:'Heebo',sans-serif;
+  font-size:14px;
+  color:var(--text);
+  background:var(--surface);
+  transition:var(--transition);
+  outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px var(--primary-light);
+}
+.field textarea{resize:vertical;min-height:70px}
+.field-full{grid-column:1/-1}
+.form-actions{
+  display:flex;gap:10px;margin-top:20px;
+  justify-content:flex-start;flex-wrap:wrap;
+}
+
+/* ── Buttons ── */
+.btn{
+  padding:12px 24px;
+  border-radius:var(--radius-sm);
+  border:none;
+  font-family:'Heebo',sans-serif;
+  font-size:14px;font-weight:600;
+  cursor:pointer;
+  transition:var(--transition);
+  display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;
+  box-shadow:0 4px 15px rgba(59,130,246,0.3);
+}
+.btn-primary:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 20px rgba(59,130,246,0.4);
+}
+.btn-success{
+  background:linear-gradient(135deg,var(--success),#059669);
+  color:#fff;box-shadow:0 4px 15px rgba(16,185,129,0.3);
+}
+.btn-success:hover{transform:translateY(-1px)}
+.btn-danger{
+  background:linear-gradient(135deg,var(--danger),#dc2626);
+  color:#fff;box-shadow:0 4px 15px rgba(239,68,68,0.3);
+}
+.btn-danger:hover{transform:translateY(-1px)}
+.btn-ghost{
+  background:transparent;color:var(--text-secondary);
+  border:2px solid var(--border);
+}
+.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-sm{padding:8px 14px;font-size:12px;border-radius:var(--radius-xs)}
+
+/* ── Ticket Cards ── */
+.tickets-list{display:flex;flex-direction:column;gap:12px}
+.ticket{
+  background:var(--surface);
+  border-radius:var(--radius);
+  border:1px solid var(--border);
+  padding:20px 24px;
+  box-shadow:var(--shadow-sm);
+  transition:var(--transition);
+  position:relative;
+  overflow:hidden;
+}
+.ticket::before{
+  content:'';position:absolute;
+  top:0;right:0;bottom:0;width:4px;
+}
+.ticket.status-waiting::before{background:var(--warning)}
+.ticket.status-progress::before{background:var(--primary)}
+.ticket.status-done::before{background:var(--success)}
+.ticket.status-cancelled::before{background:var(--danger)}
+.ticket:hover{
+  box-shadow:var(--shadow);
+  transform:translateX(-2px);
+}
+.ticket-header{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:12px;flex-wrap:wrap;gap:8px;
+}
+.ticket-customer{
+  display:flex;align-items:center;gap:12px;
+}
+.ticket-avatar{
+  width:44px;height:44px;
+  border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:700;color:#fff;
+}
+.ticket-name{font-weight:700;font-size:16px;line-height:1.2}
+.ticket-phone{
+  font-size:13px;color:var(--text-secondary);
+  direction:ltr;text-align:right;
+  display:flex;align-items:center;gap:4px;
+}
+.ticket-phone a{color:var(--primary);text-decoration:none}
+.ticket-phone a:hover{text-decoration:underline}
+.ticket-badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge-pill{
+  padding:4px 12px;
+  border-radius:50px;
+  font-size:11px;font-weight:600;
+  display:inline-flex;align-items:center;gap:4px;
+}
+.badge-home{background:#dbeafe;color:#1d4ed8}
+.badge-lab{background:#ede9fe;color:#7c3aed}
+.badge-remote{background:#d1fae5;color:#047857}
+.badge-waiting{background:var(--warning-light);color:#92400e}
+.badge-progress{background:var(--primary-light);color:var(--primary-dark)}
+.badge-done{background:var(--success-light);color:#065f46}
+.badge-cancelled{background:var(--danger-light);color:#991b1b}
+.badge-urgent{background:#fee2e2;color:#dc2626;animation:pulse-badge 2s infinite}
+@keyframes pulse-badge{
+  0%,100%{opacity:1}50%{opacity:0.6}
+}
+.ticket-body{margin:10px 0}
+.ticket-issue{
+  font-size:14px;line-height:1.7;
+  color:var(--text);
+  background:var(--bg);
+  padding:12px 16px;
+  border-radius:var(--radius-sm);
+  border-right:3px solid var(--border);
+}
+.ticket-meta{
+  display:flex;align-items:center;gap:16px;
+  margin-top:12px;flex-wrap:wrap;
+  font-size:12px;color:var(--text-muted);
+}
+.ticket-meta span{display:flex;align-items:center;gap:4px}
+.ticket-actions{
+  display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;
+}
+.ticket-notes{margin-top:10px}
+.ticket-notes textarea{
+  width:100%;padding:10px 14px;
+  border:2px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-family:'Heebo',sans-serif;
+  font-size:13px;resize:vertical;
+  min-height:50px;outline:none;
+  transition:var(--transition);
+}
+.ticket-notes textarea:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px var(--primary-light);
+}
+
+/* ── Search & Filter ── */
+.toolbar{
+  display:flex;gap:10px;margin-bottom:20px;
+  flex-wrap:wrap;align-items:center;
+}
+.search-box{
+  flex:1;min-width:200px;
+  position:relative;
+}
+.search-box input{
+  width:100%;
+  padding:12px 14px 12px 42px;
+  border:2px solid var(--border);
+  border-radius:var(--radius-sm);
+  font-family:'Heebo',sans-serif;
+  font-size:14px;outline:none;
+  background:var(--surface);
+  transition:var(--transition);
+}
+.search-box input:focus{
+  border-color:var(--primary);
+  box-shadow:0 0 0 4px var(--primary-light);
+}
+.search-box::before{
+  content:'🔍';
+  position:absolute;left:14px;top:50%;
+  transform:translateY(-50%);
+  font-size:16px;
+}
+.filter-btn{
+  padding:12px 18px;
+  border:2px solid var(--border);
+  border-radius:var(--radius-sm);
+  background:var(--surface);
+  font-family:'Heebo',sans-serif;
+  font-size:13px;font-weight:500;
+  cursor:pointer;
+  transition:var(--transition);
+  display:flex;align-items:center;gap:6px;
+  color:var(--text-secondary);
+}
+.filter-btn:hover,.filter-btn.active{
+  border-color:var(--primary);
+  color:var(--primary);
+  background:var(--primary-light);
+}
+
+/* ── Empty State ── */
+.empty-state{
+  text-align:center;
+  padding:60px 20px;
+  color:var(--text-muted);
+}
+.empty-state .icon{font-size:56px;margin-bottom:16px;opacity:0.5}
+.empty-state h3{font-size:18px;color:var(--text-secondary);margin-bottom:6px}
+.empty-state p{font-size:14px}
+
+/* ── Stats Cards ── */
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;margin-bottom:24px;
+}
+.stat-card{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:22px;
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-sm);
+  transition:var(--transition);
+}
+.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.stat-card .stat-icon{font-size:28px;margin-bottom:8px}
+.stat-card .stat-val{font-size:32px;font-weight:800;font-family:'Rubik',sans-serif}
+.stat-card .stat-label{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:2px}
+
+/* ── Modal ── */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(15,23,42,0.5);
+  backdrop-filter:blur(4px);
+  z-index:200;display:none;
+  align-items:center;justify-content:center;
+  padding:20px;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  background:var(--surface);
+  border-radius:var(--radius);
+  padding:28px;
+  max-width:500px;width:100%;
+  box-shadow:var(--shadow-lg);
+  animation:modalIn 0.3s ease;
+}
+@keyframes modalIn{
+  from{opacity:0;transform:scale(0.95)}
+  to{opacity:1;transform:scale(1)}
+}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+
+/* ── Toast ── */
+.toast-container{
+  position:fixed;bottom:24px;left:24px;
+  z-index:300;display:flex;flex-direction:column;gap:8px;
+}
+.toast{
+  padding:14px 20px;
+  border-radius:var(--radius-sm);
+  color:#fff;font-size:14px;font-weight:500;
+  box-shadow:var(--shadow-lg);
+  animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s forwards;
+  display:flex;align-items:center;gap:8px;
+}
+.toast-success{background:linear-gradient(135deg,var(--success),#059669)}
+.toast-error{background:linear-gradient(135deg,var(--danger),#dc2626)}
+.toast-info{background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
+@keyframes toastIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-20px)}}
+
+/* ── Priority Indicator ── */
+.priority-dot{
+  width:8px;height:8px;border-radius:50%;display:inline-block;
+}
+.priority-low{background:var(--success)}
+.priority-medium{background:var(--warning)}
+.priority-high{background:var(--danger)}
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .header{padding:18px 16px}
+  .logo h1{font-size:18px}
+  .header-stats{display:none}
+  .main{padding:16px 12px 40px}
+  .form-card{padding:18px}
+  .form-grid{grid-template-columns:1fr}
+  .ticket{padding:16px}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .tabs{gap:2px;padding:4px}
+  .tab{padding:10px 8px;font-size:12px;min-width:auto}
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
+
+/* ── Print ── */
+@media print{
+  .header,.tabs,.form-card,.toolbar,.ticket-actions,.btn,.toast-container{display:none!important}
+  .ticket{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
+}
+</style>
 </head>
-<body style="margin: 0; padding: 0;">
-    <div id="root"></div>
+<body>
 
-    <script type="text/babel">
-        const { useState, useEffect, useCallback } = React;
+<!-- ═══ HEADER ═══ -->
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">⚡</div>
+      <div>
+        <h1>TechQueue</h1>
+        <p>מערכת ניהול תורים ותקלות</p>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-chip">⏳ ממתינים <span class="num" id="hdrWaiting">0</span></div>
+      <div class="stat-chip">🔧 בטיפול <span class="num" id="hdrProgress">0</span></div>
+      <div class="stat-chip">✅ הושלמו <span class="num" id="hdrDone">0</span></div>
+    </div>
+  </div>
+</header>
 
-        // הגדרת האייקונים לשימוש ישיר מתוך Lucide CDN
-        const Icon = ({ name, size = 24, color = "currentColor", strokeWidth = 2, fill="none", style }) => {
-            useEffect(() => {
-                lucide.createIcons();
-            });
-            return <i data-lucide={name} style={{ width: size, height: size, color, strokeWidth, fill, ...style }}></i>;
-        };
+<!-- ═══ MAIN ═══ -->
+<div class="main">
 
-        const Wrench = (p) => <Icon name="wrench" {...p} />;
-        const Home = (p) => <Icon name="home" {...p} />;
-        const FlaskConical = (p) => <Icon name="flask-conical" {...p} />;
-        const Monitor = (p) => <Icon name="monitor" {...p} />;
-        const Zap = (p) => <Icon name="zap" {...p} />;
-        const CheckCircle2 = (p) => <Icon name="check-circle-2" {...p} />;
-        const Search = (p) => <Icon name="search" {...p} />;
-        const Plus = (p) => <Icon name="plus" {...p} />;
-        const Phone = (p) => <Icon name="phone" {...p} />;
-        const MapPin = (p) => <Icon name="map-pin" {...p} />;
-        const Calendar = (p) => <Icon name="calendar" {...p} />;
-        const Trash2 = (p) => <Icon name="trash-2" {...p} />;
-        const Pencil = (p) => <Icon name="pencil" {...p} />;
-        const AlertCircle = (p) => <Icon name="alert-circle" {...p} />;
-        const SlidersHorizontal = (p) => <Icon name="sliders-horizontal" {...p} />;
-        const Cpu = (p) => <Icon name="cpu" {...p} />;
-        const FileText = (p) => <Icon name="file-text" {...p} />;
-        const ArrowRight = (p) => <Icon name="arrow-right" {...p} />;
-        const Loader2 = (p) => <Icon name="loader-2" {...p} />;
-        const User = (p) => <Icon name="user" {...p} />;
-        const X = (p) => <Icon name="x" {...p} />;
-        const Tag = (p) => <Icon name="tag" {...p} />;
-        const MessageSquare = (p) => <Icon name="message-square" {...p} />;
-        const Save = (p) => <Icon name="save" {...p} />;
-        const ClipboardList = (p) => <Icon name="clipboard-list" {...p} />;
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="queue" onclick="switchTab('queue')">
+      📋 תור פעיל <span class="badge" id="tabQueueBadge">0</span>
+    </button>
+    <button class="tab" data-tab="add" onclick="switchTab('add')">
+      ➕ הוספת לקוח
+    </button>
+    <button class="tab" data-tab="history" onclick="switchTab('history')">
+      📁 ארכיון <span class="badge" id="tabHistoryBadge">0</span>
+    </button>
+    <button class="tab" data-tab="stats" onclick="switchTab('stats')">
+      📊 סטטיסטיקות
+    </button>
+  </div>
 
-        // Firebase setup (Firestore) + fallback ל-localStorage
-        const firebaseConfig = {
-            apiKey: "AIzaSyBVktHLR4lLddC_5GB6N0ApS0whCBMIRgw",
+  <!-- ═══ PANEL: Add ═══ -->
+  <div class="panel" id="panelAdd">
+    <div class="form-card">
+      <div class="form-title">🆕 פתיחת קריאה חדשה</div>
+      <div class="form-grid">
+        <div class="field">
+          <label>👤 שם הלקוח</label>
+          <input type="text" id="fName" placeholder="ישראל ישראלי" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>📱 טלפון</label>
+          <input type="tel" id="fPhone" placeholder="050-0000000" dir="ltr">
+        </div>
+        <div class="field">
+          <label>🔧 סוג שירות</label>
+          <select id="fService">
+            <option value="home">🏠 אצל הלקוח</option>
+            <option value="lab">🖥️ במעבדה</option>
+            <option value="remote">🌐 שליטה מרחוק</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>⚠️ דחיפות</label>
+          <select id="fPriority">
+            <option value="low">🟢 רגיל</option>
+            <option value="medium">🟡 בינוני</option>
+            <option value="high">🔴 דחוף</option>
+          </select>
+        </div>
+        <div class="field field-full">
+          <label>🔍 תיאור התקלה</label>
+          <textarea id="fIssue" placeholder="תאר את הבעיה בקצרה..."></textarea>
+        </div>
+        <div class="field">
+          <label>💰 עלות משוערת (₪)</label>
+          <input type="number" id="fCost" placeholder="0" min="0">
+        </div>
+        <div class="field">
+          <label>🏷️ מכשיר / דגם</label>
+          <input type="text" id="fDevice" placeholder='למשל: Lenovo ThinkPad' autocomplete="off">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" onclick="addTicket()">📌 הוסף לתור</button>
+        <button class="btn btn-ghost" onclick="clearForm()">🗑️ נקה טופס</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PANEL: Queue ═══ -->
+  <div class="panel active" id="panelQueue">
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="חיפוש לפי שם, טלפון או תקלה..." oninput="renderQueue()">
+      </div>
+      <button class="filter-btn" data-filter="all" onclick="setFilter('all',this)">🗂️ הכל</button>
+      <button class="filter-btn" data-filter="waiting" onclick="setFilter('waiting',this)">⏳ ממתין</button>
+      <button class="filter-btn" data-filter="progress" onclick="setFilter('progress',this)">🔧 בטיפול</button>
+      <button class="filter-btn" data-filter="home" onclick="setFilter('home',this)">🏠 בית</button>
+      <button class="filter-btn" data-filter="lab" onclick="setFilter('lab',this)">🖥️ מעבדה</button>
+      <button class="filter-btn" data-filter="remote" onclick="setFilter('remote',this)">🌐 מרחוק</button>
+    </div>
+    <div class="tickets-list" id="queueList"></div>
+  </div>
+
+  <!-- ═══ PANEL: History ═══ -->
+  <div class="panel" id="panelHistory">
+    <div class="toolbar">
+      <div class="search-box">
+        <input type="text" id="searchHistory" placeholder="חיפוש בארכיון..." oninput="renderHistory()">
+      </div>
+    </div>
+    <div class="tickets-list" id="historyList"></div>
+  </div>
+
+  <!-- ═══ PANEL: Stats ═══ -->
+  <div class="panel" id="panelStats">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="form-card" style="margin-top:20px">
+      <div class="form-title">📈 סיכום חודשי</div>
+      <canvas id="monthlyChart" height="260" style="width:100%;max-height:260px"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ Confirm Modal ═══ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal">
+    <h3 id="confirmTitle">⚠️ אישור</h3>
+    <p id="confirmMsg"></p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
+      <button class="btn btn-danger" id="confirmBtn" onclick="confirmAction()">אישור</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Toast Container ═══ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══ Firebase SDK ═══ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// ╔══════════════════════════════════════════════════════╗
+// ║  🔧 Firebase Configuration — CHANGE THESE VALUES!   ║
+// ╚══════════════════════════════════════════════════════╝
+const firebaseConfig = {
+  apiKey: "AIzaSyBVktHLR4lLddC_5GB6N0ApS0whCBMIRgw",
   authDomain: "technician-app-74278.firebaseapp.com",
   projectId: "technician-app-74278",
   storageBucket: "technician-app-74278.firebasestorage.app",
   messagingSenderId: "1006801375264",
   appId: "1:1006801375264:web:dbfb9657170f3eaef12c45"
-        };
+};
 
-        let db = null;
-        try {
-            firebase.initializeApp(firebaseConfig);
-            db = firebase.firestore();
-        } catch (e) {
-            console.warn("Firebase initialization failed, using localStorage fallback", e);
-        }
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const ticketsRef = db.collection('tickets');
 
-        window.storage = {
-            get: async (key) => {
-                if (db) {
-                    try {
-                        const doc = await db.collection("repair-manager").doc(key).get();
-                        return { value: doc.exists ? JSON.stringify(doc.data().value) : null };
-                    } catch (e) {
-                        console.warn("Firestore get failed, using localStorage", e);
-                    }
-                }
-                return { value: localStorage.getItem(key) };
-            },
-            set: async (key, val) => {
-                if (db) {
-                    try {
-                        await db.collection("repair-manager").doc(key).set({ value: JSON.parse(val) });
-                        return;
-                    } catch (e) {
-                        console.warn("Firestore set failed, using localStorage", e);
-                    }
-                }
-                localStorage.setItem(key, val);
-            }
-        };
+// ═══ State ═══
+let tickets = [];
+let currentFilter = 'all';
+let pendingAction = null;
 
-        const STATUS_CONFIG = {
-            waiting: { label: "ממתין", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a" },
-            inprogress: { label: "בטיפול", color: "#3b82f6", bg: "#eff6ff", border: "#bfdbfe" },
-            done: { label: "מוכן", color: "#10b981", bg: "#f0fdf4", border: "#a7f3d0" },
-            delivered: { label: "נמסר", color: "#8b5cf6", bg: "#faf5ff", border: "#ddd6fe" }
-        };
+// ═══ Real-time Listener ═══
+ticketsRef.orderBy('createdAt','desc').onSnapshot(snapshot => {
+  tickets = [];
+  snapshot.forEach(doc => {
+    tickets.push({ id: doc.id, ...doc.data() });
+  });
+  renderAll();
+}, err => {
+  console.error('Firestore error:', err);
+  toast('❌ שגיאה בחיבור למסד הנתונים','error');
+});
 
-        const TYPE_CONFIG = {
-            home: { label: "ביקור בית", Icon: Home },
-            lab: { label: "מעבדה", Icon: FlaskConical },
-            remote: { label: "שלט רחוק", Icon: Monitor }
-        };
+// ═══ Add Ticket ═══
+async function addTicket(){
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const service = document.getElementById('fService').value;
+  const priority = document.getElementById('fPriority').value;
+  const issue = document.getElementById('fIssue').value.trim();
+  const cost = document.getElementById('fCost').value || 0;
+  const device = document.getElementById('fDevice').value.trim();
 
-        const URGENCY_CONFIG = {
-            low: { label: "רגיל", color: "#6b7280", bg: "#f9fafb" },
-            high: { label: "דחוף", color: "#ef4444", bg: "#fef2f2" }
-        };
+  if(!name || !phone){
+    toast('⚠️ נא למלא שם וטלפון','error');
+    return;
+  }
+  if(!issue){
+    toast('⚠️ נא לתאר את התקלה','error');
+    return;
+  }
 
-        const emptyForm = {
-            name: "", phone: "", issue: "", type: "home",
-            status: "waiting", urgency: "low", address: "",
-            date: "", time: "", notes: "", device: ""
-        };
+  try{
+    await ticketsRef.add({
+      name, phone, service, priority, issue,
+      cost: Number(cost),
+      device,
+      status: 'waiting',
+      notes: '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      completedAt: null,
+      queueNumber: Date.now()
+    });
+    clearForm();
+    toast('✅ הלקוח נוסף לתור בהצלחה!','success');
+    switchTab('queue');
+  } catch(e){
+    console.error(e);
+    toast('❌ שגיאה בשמירת הנתונים','error');
+  }
+}
 
-        function formatDate(str) {
-            if (!str) return "";
-            return new Date(str + "T00:00:00").toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
-        }
+function clearForm(){
+  ['fName','fPhone','fIssue','fCost','fDevice'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fService').value='home';
+  document.getElementById('fPriority').value='low';
+}
 
-        function today() {
-            return new Date().toISOString().split("T")[0];
-        }
+// ═══ Update Status ═══
+async function updateStatus(id, status){
+  const data = { status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+  if(status === 'done' || status === 'cancelled'){
+    data.completedAt = firebase.firestore.FieldValue.serverTimestamp();
+  }
+  await ticketsRef.doc(id).update(data);
+  const labels = {waiting:'⏳ ממתין',progress:'🔧 בטיפול',done:'✅ הושלם',cancelled:'❌ בוטל'};
+  toast(`${labels[status] || status}`,'success');
+}
 
-        const inputStyle = {
-            width: "100%", border: "2px solid #e2e8f0", borderRadius: 12, padding: "10px 13px",
-            fontSize: 14, outline: "none", fontFamily: "'Heebo', sans-serif", color: "#1e293b",
-            background: "#fff", boxSizing: "border-box", transition: "border-color 0.2s"
-        };
+// ═══ Save Notes ═══
+let noteTimers = {};
+function saveNotes(id, val){
+  clearTimeout(noteTimers[id]);
+  noteTimers[id] = setTimeout(async()=>{
+    await ticketsRef.doc(id).update({ notes: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  }, 800);
+}
 
-        function SectionTitle({ icon: IconComponent, label }) {
-            return (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                    <div style={{ width: 28, height: 28, background: "#eff6ff", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <IconComponent size={15} color="#3b82f6" strokeWidth={2.5} />
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: "#3b82f6", textTransform: "uppercase" }}>{label}</span>
-                </div>
-            );
-        }
+// ═══ Delete ═══
+function confirmDelete(id){
+  pendingAction = async()=>{
+    await ticketsRef.doc(id).delete();
+    toast('🗑️ הקריאה נמחקה','info');
+    closeModal();
+  };
+  document.getElementById('confirmTitle').textContent = '🗑️ מחיקת קריאה';
+  document.getElementById('confirmMsg').textContent = 'האם למחוק את הקריאה לצמיתות?';
+  document.getElementById('confirmModal').classList.add('show');
+}
 
-        function FormGroup({ label, children }) {
-            return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
-                    <label style={{ fontSize: 13, fontWeight: 700, color: "#374151" }}>{label}</label>
-                    {children}
-                </div>
-            );
-        }
+function confirmAction(){
+  if(pendingAction) pendingAction();
+  pendingAction = null;
+}
+function closeModal(){
+  document.getElementById('confirmModal').classList.remove('show');
+  pendingAction = null;
+}
 
-        function RepairManager() {
-            const [tickets, setTickets] = useState([]);
-            const [view, setView] = useState("queue");
-            const [editing, setEditing] = useState(null);
-            const [form, setForm] = useState(emptyForm);
-            const [selected, setSelected] = useState(null);
-            const [filter, setFilter] = useState("all");
-            const [search, setSearch] = useState("");
-            const [loading, setLoading] = useState(true);
-            const [saving, setSaving] = useState(false);
-            const [confirmDelete, setConfirmDelete] = useState(null);
-            const [toast, setToast] = useState(null);
+// ═══ Rendering ═══
+function renderAll(){
+  renderQueue();
+  renderHistory();
+  renderStats();
+  updateHeaderStats();
+}
 
-            const showToast = (msg, type = "success") => {
-                setToast({ msg, type });
-                setTimeout(() => setToast(null), 2800);
-            };
+function updateHeaderStats(){
+  const w = tickets.filter(t=>t.status==='waiting').length;
+  const p = tickets.filter(t=>t.status==='progress').length;
+  const d = tickets.filter(t=>t.status==='done').length;
+  document.getElementById('hdrWaiting').textContent = w;
+  document.getElementById('hdrProgress').textContent = p;
+  document.getElementById('hdrDone').textContent = d;
+  document.getElementById('tabQueueBadge').textContent = w + p;
+  document.getElementById('tabHistoryBadge').textContent = d + tickets.filter(t=>t.status==='cancelled').length;
+}
 
-            useEffect(() => {
-                (async () => {
-                    try {
-                        const result = await window.storage.get("tickets_v2");
-                        if (result?.value) setTickets(JSON.parse(result.value));
-                    } catch (e) {}
-                    setLoading(false);
-                })();
-            }, []);
+function getActiveTickets(){
+  return tickets.filter(t=> t.status==='waiting' || t.status==='progress');
+}
+function getArchiveTickets(){
+  return tickets.filter(t=> t.status==='done' || t.status==='cancelled');
+}
 
-            const saveTickets = useCallback(async (list) => {
-                setSaving(true);
-                try { await window.storage.set("tickets_v2", JSON.stringify(list)); } catch (e) {}
-                setSaving(false);
-            }, []);
+function matchSearch(t, query){
+  if(!query) return true;
+  const q = query.toLowerCase();
+  return (t.name||'').toLowerCase().includes(q)
+    || (t.phone||'').includes(q)
+    || (t.issue||'').toLowerCase().includes(q)
+    || (t.device||'').toLowerCase().includes(q);
+}
 
-            const submitForm = async () => {
-                if (!form.name.trim() || !form.phone.trim()) {
-                    showToast("שם וטלפון הם שדות חובה", "error");
-                    return;
-                }
-                let updated;
-                if (editing !== null) {
-                    updated = tickets.map((t) => t.id === editing ? { ...form, id: editing } : t);
-                    showToast("הפניה עודכנה בהצלחה");
-                } else {
-                    updated = [{ ...form, id: Date.now(), createdAt: today() }, ...tickets];
-                    showToast("פניה חדשה נוספה");
-                }
-                setTickets(updated);
-                await saveTickets(updated);
-                setView("queue"); setEditing(null); setForm(emptyForm);
-            };
+function matchFilter(t){
+  if(currentFilter==='all') return true;
+  if(currentFilter==='waiting' || currentFilter==='progress') return t.status===currentFilter;
+  if(currentFilter==='home'||currentFilter==='lab'||currentFilter==='remote') return t.service===currentFilter;
+  return true;
+}
 
-            const deleteTicket = async (id) => {
-                const updated = tickets.filter((t) => t.id !== id);
-                setTickets(updated);
-                await saveTickets(updated);
-                setConfirmDelete(null); setView("queue");
-                showToast("הפניה נמחקה");
-            };
+function renderQueue(){
+  const query = document.getElementById('searchInput').value.trim();
+  const list = document.getElementById('queueList');
+  const active = getActiveTickets().filter(t=> matchSearch(t,query) && matchFilter(t));
 
-            const updateStatus = async (id, status) => {
-                const updated = tickets.map((t) => t.id === id ? { ...t, status } : t);
-                setTickets(updated);
-                await saveTickets(updated);
-                if (selected?.id === id) setSelected((s) => ({ ...s, status }));
-                showToast("סטטוס עודכן: " + STATUS_CONFIG[status].label);
-            };
+  // Sort: high priority first, then by creation
+  active.sort((a,b)=>{
+    const po = {high:0,medium:1,low:2};
+    if(po[a.priority]!==po[b.priority]) return po[a.priority]-po[b.priority];
+    const aT = a.createdAt?.toMillis?.()||0;
+    const bT = b.createdAt?.toMillis?.()||0;
+    return aT - bT;
+  });
 
-            const openEdit = (t) => { setForm({ ...emptyForm, ...t }); setEditing(t.id); setView("form"); };
-            const openDetail = (t) => { setSelected(t); setView("detail"); };
-            const goBack = () => { setView("queue"); setEditing(null); setForm(emptyForm); };
+  if(!active.length){
+    list.innerHTML = `<div class="empty-state">
+      <div class="icon">📭</div>
+      <h3>אין קריאות פעילות</h3>
+      <p>הוסף לקוח חדש כדי להתחיל</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = active.map(t=>ticketHTML(t,false)).join('');
+}
 
-            const filtered = tickets
-                .filter((t) => filter === "all" || t.status === filter)
-                .filter((t) => !search.trim() || t.name.includes(search) || t.phone.includes(search))
-                .sort((a, b) => {
-                    if (a.urgency === "high" && b.urgency !== "high") return -1;
-                    if (b.urgency === "high" && a.urgency !== "high") return 1;
-                    if (a.date && b.date) return a.date.localeCompare(b.date);
-                    return b.id - a.id;
-                });
+function renderHistory(){
+  const query = document.getElementById('searchHistory')?.value?.trim() || '';
+  const list = document.getElementById('historyList');
+  const archive = getArchiveTickets().filter(t=> matchSearch(t,query));
 
-            const counts = Object.keys(STATUS_CONFIG).reduce((acc, k) => {
-                acc[k] = tickets.filter((t) => t.status === k).length;
-                return acc;
-            }, {});
+  if(!archive.length){
+    list.innerHTML = `<div class="empty-state">
+      <div class="icon">📂</div>
+      <h3>הארכיון ריק</h3>
+      <p>קריאות שהושלמו או בוטלו יופיעו כאן</p>
+    </div>`;
+    return;
+  }
+  list.innerHTML = archive.map(t=>ticketHTML(t,true)).join('');
+}
 
-            if (loading) return (
-                <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                    <Loader2 size={36} color="#3b82f6" style={{ animation: "spin 1s linear infinite" }} />
-                    <p style={{ marginTop: 14, color: "#94a3b8", fontFamily: "'Heebo', sans-serif" }}>טוען נתונים...</p>
-                </div>
-            );
+function ticketHTML(t, isArchive){
+  const serviceMap = {home:{label:'🏠 אצל הלקוח',cls:'badge-home'},lab:{label:'🖥️ במעבדה',cls:'badge-lab'},remote:{label:'🌐 מרחוק',cls:'badge-remote'}};
+  const statusMap = {waiting:{label:'⏳ ממתין',cls:'badge-waiting'},progress:{label:'🔧 בטיפול',cls:'badge-progress'},done:{label:'✅ הושלם',cls:'badge-done'},cancelled:{label:'❌ בוטל',cls:'badge-cancelled'}};
+  const priorityMap = {low:{label:'רגיל',cls:'priority-low'},medium:{label:'בינוני',cls:'priority-medium'},high:{label:'דחוף',cls:'priority-high'}};
+  const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4'];
+  const color = avatarColors[Math.abs(hashStr(t.name||''))%avatarColors.length];
+  const initials = (t.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2);
+  const svc = serviceMap[t.service]||serviceMap.home;
+  const sts = statusMap[t.status]||statusMap.waiting;
+  const pri = priorityMap[t.priority]||priorityMap.low;
+  const created = t.createdAt?.toDate?.() ? formatDate(t.createdAt.toDate()) : '';
+  const completed = t.completedAt?.toDate?.() ? formatDate(t.completedAt.toDate()) : '';
 
-            return (
-                <div dir="rtl" style={{ minHeight: "100vh", background: "#f1f5f9", fontFamily: "'Heebo', sans-serif" }}>
-                    <style>{`
-                        @keyframes spin { to { transform: rotate(360deg); } }
-                        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-                        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-                        .ticket-card:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.06) !important; }
-                        .stat-btn:hover { transform: translateY(-1px); }
-                        input:focus, textarea:focus, select:focus { border-color: #3b82f6 !important; }
-                    `}</style>
+  let actions = '';
+  if(!isArchive){
+    if(t.status==='waiting'){
+      actions = `
+        <button class="btn btn-sm btn-primary" onclick="updateStatus('${t.id}','progress')">🔧 התחל טיפול</button>
+        <button class="btn btn-sm btn-success" onclick="updateStatus('${t.id}','done')">✅ סיים</button>
+        <button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','cancelled')">❌ בטל</button>`;
+    } else if(t.status==='progress'){
+      actions = `
+        <button class="btn btn-sm btn-success" onclick="updateStatus('${t.id}','done')">✅ סיים טיפול</button>
+        <button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','waiting')">⏳ החזר להמתנה</button>`;
+    }
+  } else {
+    actions = `<button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','waiting')">🔄 פתח מחדש</button>`;
+  }
+  actions += `<button class="btn btn-sm btn-danger" onclick="confirmDelete('${t.id}')">🗑️</button>`;
 
-                    {/* Toast */}
-                    {toast && (
-                        <div style={{
-                            position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)",
-                            background: toast.type === "error" ? "#ef4444" : "#1e293b",
-                            color: "#fff", padding: "11px 20px", borderRadius: 14, fontWeight: 600,
-                            fontSize: 14, zIndex: 9999, boxShadow: "0 8px 30px rgba(0,0,0,0.18)",
-                            animation: "slideDown 0.22s ease", whiteSpace: "nowrap",
-                            display: "flex", alignItems: "center", gap: 8,
-                        }}>
-                            {toast.type === "error" ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
-                            {toast.msg}
-                        </div>
-                    )}
+  return `
+  <div class="ticket status-${t.status}">
+    <div class="ticket-header">
+      <div class="ticket-customer">
+        <div class="ticket-avatar" style="background:${color}">${initials}</div>
+        <div>
+          <div class="ticket-name">${esc(t.name)}</div>
+          <div class="ticket-phone">📞 <a href="tel:${esc(t.phone)}">${esc(t.phone)}</a></div>
+        </div>
+      </div>
+      <div class="ticket-badges">
+        ${t.priority==='high'?'<span class="badge-pill badge-urgent">🔴 דחוף</span>':''}
+        <span class="badge-pill ${svc.cls}">${svc.label}</span>
+        <span class="badge-pill ${sts.cls}">${sts.label}</span>
+      </div>
+    </div>
+    <div class="ticket-body">
+      <div class="ticket-issue">${esc(t.issue)}</div>
+    </div>
+    <div class="ticket-meta">
+      ${t.device?`<span>💻 ${esc(t.device)}</span>`:''}
+      ${t.cost?`<span>💰 ₪${Number(t.cost).toLocaleString()}</span>`:''}
+      ${created?`<span>📅 ${created}</span>`:''}
+      ${completed?`<span>✔️ ${completed}</span>`:''}
+    </div>
+    <div class="ticket-notes">
+      <textarea placeholder="📝 הערות פנימיות..." oninput="saveNotes('${t.id}',this.value)">${esc(t.notes||'')}</textarea>
+    </div>
+    <div class="ticket-actions">${actions}</div>
+  </div>`;
+}
 
-                    {/* Confirm Delete */}
-                    {confirmDelete && (
-                        <div style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.4)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <div style={{ background: "#fff", borderRadius: 24, padding: 32, maxWidth: 320, width: "90%", textAlign: "center" }}>
-                                <div style={{ width: 58, height: 58, background: "#fef2f2", borderRadius: "50%", margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <Trash2 size={26} color="#ef4444" strokeWidth={2} />
-                                </div>
-                                <h3 style={{ fontSize: 20, fontWeight: 800, marginBottom: 8, color: "#0f172a" }}>מחיקת פניה</h3>
-                                <p style={{ color: "#64748b", lineHeight: 1.7, marginBottom: 24, fontSize: 14 }}>
-                                    האם אתה בטוח שברצונך למחוק את הפניה של <strong style={{ color: "#1e293b" }}>{confirmDelete.name}</strong>? פעולה זו אינה הפיכה.
-                                </p>
-                                <div style={{ display: "flex", gap: 10 }}>
-                                    <button onClick={() => setConfirmDelete(null)} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "2px solid #e2e8f0", background: "#fff", fontWeight: 600, cursor: "pointer" }}>ביטול</button>
-                                    <button onClick={() => deleteTicket(confirmDelete.id)} style={{ flex: 1, padding: "12px", borderRadius: 12, border: "none", background: "#ef4444", color: "#fff", fontWeight: 600, cursor: "pointer" }}>מחק</button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
+// ═══ Stats ═══
+function renderStats(){
+  const total = tickets.length;
+  const waiting = tickets.filter(t=>t.status==='waiting').length;
+  const progress = tickets.filter(t=>t.status==='progress').length;
+  const done = tickets.filter(t=>t.status==='done').length;
+  const cancelled = tickets.filter(t=>t.status==='cancelled').length;
+  const home = tickets.filter(t=>t.service==='home').length;
+  const lab = tickets.filter(t=>t.service==='lab').length;
+  const remote = tickets.filter(t=>t.service==='remote').length;
+  const totalRevenue = tickets.filter(t=>t.status==='done').reduce((s,t)=>s+Number(t.cost||0),0);
 
-                    {/* Header */}
-                    <header style={{ background: "#fff", borderBottom: "1px solid #e2e8f0", position: "sticky", top: 0, zIndex: 10 }}>
-                        <div style={{ maxWidth: 820, margin: "0 auto", padding: "0 16px", height: 70, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                                <div style={{ width: 40, height: 40, background: "linear-gradient(135deg, #3b82f6, #2563eb)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                    <Wrench size={20} color="#fff" strokeWidth={2.3} />
-                                </div>
-                                <div>
-                                    <div style={{ fontSize: 17, fontWeight: 900, color: "#0f172a", lineHeight: 1.2 }}>ניהול תיקונים</div>
-                                    <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 500 }}>{tickets.length} פניות פעילות</div>
-                                </div>
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                                {saving && (
-                                    <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, color: "#94a3b8" }}>
-                                        <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> שומר...
-                                    </div>
-                                )}
-                                {view !== "queue" && (
-                                    <button onClick={goBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "#f1f5f9", border: "none", padding: "8px 14px", borderRadius: 10, cursor: "pointer", fontWeight: 600, color: "#475569" }}>
-                                        <ArrowRight size={14} /> חזרה
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </header>
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-val">${total}</div><div class="stat-label">סה"כ קריאות</div></div>
+    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val">${waiting}</div><div class="stat-label">ממתינות</div></div>
+    <div class="stat-card"><div class="stat-icon">🔧</div><div class="stat-val">${progress}</div><div class="stat-label">בטיפול</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val">${done}</div><div class="stat-label">הושלמו</div></div>
+    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val">₪${totalRevenue.toLocaleString()}</div><div class="stat-label">הכנסות (הושלמו)</div></div>
+    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-val">${home}</div><div class="stat-label">אצל הלקוח</div></div>
+    <div class="stat-card"><div class="stat-icon">🖥️</div><div class="stat-val">${lab}</div><div class="stat-label">במעבדה</div></div>
+    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-val">${remote}</div><div class="stat-label">שליטה מרחוק</div></div>
+  `;
 
-                    <main style={{ maxWidth: 820, margin: "0 auto", padding: "20px 14px 50px" }}>
-                        {/* QUEUE VIEW */}
-                        {view === "queue" && (
-                            <div style={{ animation: "fadeIn 0.2s ease" }}>
-                                {/* Stats */}
-                                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 24 }}>
-                                    {Object.entries(STATUS_CONFIG).map(([key, cfg]) => {
-                                        const active = filter === key;
-                                        return (
-                                            <button key={key} className="stat-btn" onClick={() => setFilter(active ? "all" : key)} style={{
-                                                background: active ? cfg.bg : "#fff",
-                                                border: "2px solid " + (active ? cfg.color : "#e2e8f0"),
-                                                borderRadius: 16, padding: "13px 8px", display: "flex", flexDirection: "column",
-                                                alignItems: "center", gap: 5, cursor: "pointer", transition: "all 0.2s",
-                                                fontFamily: "'Heebo', sans-serif", boxShadow: active ? "0 4px 12px rgba(0,0,0,0.05)" : "none"
-                                            }}>
-                                                <cfg.Icon size={19} color={active ? cfg.color : "#94a3b8"} strokeWidth={2.5} />
-                                                <span style={{ fontSize: 23, fontWeight: 900, color: active ? cfg.color : "#1e293b", lineHeight: 1 }}>{counts[key] || 0}</span>
-                                                <span style={{ fontSize: 11, color: active ? cfg.color : "#94a3b8", fontWeight: 600 }}>{cfg.label}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+  drawChart();
+}
 
-                                {/* Toolbar */}
-                                <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                                    <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, background: "#fff", border: "2px solid #e2e8f0", borderRadius: 14, padding: "0 14px" }}>
-                                        <Search size={15} color="#94a3b8" strokeWidth={2.5} />
-                                        <input
-                                            placeholder="חפש לפי שם, טלפון, תקלה..."
-                                            value={search} onChange={(e) => setSearch(e.target.value)}
-                                            style={{ flex: 1, border: "none", outline: "none", background: "transparent", padding: "12px 0", fontSize: 14, fontFamily: "'Heebo', sans-serif" }}
-                                        />
-                                    </div>
-                                    <button onClick={() => { setForm({ ...emptyForm, date: today() }); setView("form"); }} style={{
-                                        display: "flex", alignItems: "center", gap: 7, background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-                                        color: "#fff", border: "none", borderRadius: 14, padding: "0 18px",
-                                        cursor: "pointer", fontSize: 14, whiteSpace: "nowrap", fontFamily: "'Heebo', sans-serif", fontWeight: 700,
-                                        boxShadow: "0 4px 14px rgba(59,130,246,0.32)",
-                                    }}>
-                                        <Plus size={17} strokeWidth={2.5} /> פניה חדשה
-                                    </button>
-                                </div>
+function drawChart(){
+  const canvas = document.getElementById('monthlyChart');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width - 56;
+  canvas.height = 240;
 
-                                {filter !== "all" && (
-                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#e2e8f0", padding: "6px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, marginBottom: 14, color: "#475569" }}>
-                                        <SlidersHorizontal size={12} />
-                                        מסנן: {STATUS_CONFIG[filter].label}
-                                        <button onClick={() => setFilter("all")} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}>
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                )}
+  // Gather data per month
+  const months = {};
+  const monthNames = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
+  tickets.forEach(t=>{
+    if(!t.createdAt?.toDate) return;
+    const d = t.createdAt.toDate();
+    const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}`;
+    if(!months[key]) months[key]={label:monthNames[d.getMonth()]+' '+d.getFullYear(), count:0, revenue:0};
+    months[key].count++;
+    if(t.status==='done') months[key].revenue += Number(t.cost||0);
+  });
 
-                                {/* List */}
-                                {filtered.length === 0 ? (
-                                    <div style={{ textAlign: "center", padding: "60px 20px", background: "#fff", borderRadius: 20, border: "2px dashed #e2e8f0" }}>
-                                        <ClipboardList size={46} color="#cbd5e1" strokeWidth={1.5} style={{ marginBottom: 12 }} />
-                                        <p style={{ color: "#94a3b8", fontSize: 15, fontWeight: 500, margin: 0 }}>
-                                            {tickets.length === 0 ? "הוסף פניה חדשה להתחיל" : "לא נמצאו תוצאות"}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                                        {filtered.map((t) => {
-                                            const sc = STATUS_CONFIG[t.status];
-                                            const tc = TYPE_CONFIG[t.type];
-                                            return (
-                                                <div key={t.id} className="ticket-card" onClick={() => openDetail(t)} style={{
-                                                    background: "#fff", borderRadius: 18, padding: "16px 18px",
-                                                    cursor: "pointer", transition: "all 0.18s", boxShadow: "0 2px 10px rgba(0,0,0,0.02)",
-                                                    borderRight: "4px solid " + sc.color,
-                                                }}>
-                                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                                            {t.urgency === "high" && (
-                                                                <div style={{ display: "flex", alignItems: "center", background: "#fef2f2", padding: "4px 8px", borderRadius: 8, gap: 4 }}>
-                                                                    <Zap size={11} color="#ef4444" fill="#ef4444" />
-                                                                    <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 800 }}>דחוף</span>
-                                                                </div>
-                                                            )}
-                                                            <span style={{ fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{t.name}</span>
-                                                        </div>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: 6, background: sc.bg, padding: "4px 10px", borderRadius: 20, border: "1px solid " + sc.border }}>
-                                                            <sc.Icon size={12} color={sc.color} strokeWidth={2.5} />
-                                                            <span style={{ fontSize: 11, color: sc.color, fontWeight: 800 }}>{sc.label}</span>
-                                                        </div>
-                                                    </div>
+  const data = Object.values(months).slice(-12);
+  if(!data.length){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.font = '14px Heebo';ctx.fillStyle='#94a3b8';ctx.textAlign='center';
+    ctx.fillText('אין מספיק נתונים להצגת גרף',canvas.width/2,canvas.height/2);
+    return;
+  }
 
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                                                        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                            <Phone size={12} color="#3b82f6" strokeWidth={2.5} />
-                                                            <span style={{ fontSize: 13, color: "#3b82f6", fontWeight: 600 }}>{t.phone}</span>
-                                                        </div>
-                                                        {t.device && (
-                                                            <>
-                                                                <span style={{ color: "#cbd5e1" }}>|</span>
-                                                                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                                                                    <Cpu size={12} color="#64748b" strokeWidth={2} />
-                                                                    <span style={{ fontSize: 13, color: "#64748b" }}>{t.device}</span>
-                                                                </div>
-                                                            </>
-                                                        )}
-                                                    </div>
+  const maxCount = Math.max(...data.map(d=>d.count),1);
+  const barW = Math.min(48, (canvas.width - 60) / data.length - 8);
+  const chartH = canvas.height - 50;
 
-                                                    {t.issue && (
-                                                        <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5, marginBottom: 14, background: "#f8fafc", padding: "10px", borderRadius: 10 }}>
-                                                            {t.issue}
-                                                        </div>
-                                                    )}
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
-                                                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", borderTop: "1px solid #f1f5f9", paddingTop: 12 }}>
-                                                        {tc && (
-                                                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                                                <tc.Icon size={11} color="#64748b" strokeWidth={2} />
-                                                                <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{tc.label}</span>
-                                                            </div>
-                                                        )}
-                                                        {t.date && (
-                                                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                                                <Calendar size={11} color="#64748b" strokeWidth={2} />
-                                                                <span style={{ fontSize: 11, color: "#64748b", fontWeight: 500 }}>{formatDate(t.date)} {t.time}</span>
-                                                            </div>
-                                                        )}
-                                                        {t.createdAt && (
-                                                            <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                                                                <FileText size={11} color="#94a3b8" strokeWidth={2} />
-                                                                <span style={{ fontSize: 11, color: "#94a3b8" }}>נוצר: {formatDate(t.createdAt)}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        )}
+  data.forEach((d,i)=>{
+    const x = 30 + i*(barW+8);
+    const h = (d.count / maxCount) * chartH;
+    const y = chartH - h + 10;
 
-                        {/* DETAIL VIEW */}
-                        {view === "detail" && selected && (() => {
-                            const t = tickets.find((x) => x.id === selected.id) || selected;
-                            const sc = STATUS_CONFIG[t.status];
-                            const tc = TYPE_CONFIG[t.type];
-                            return (
-                                <div style={{ animation: "fadeIn 0.2s ease" }}>
-                                    <div style={{ background: "#fff", borderRadius: 22, padding: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", marginBottom: 16 }}>
-                                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-                                            <div>
-                                                {t.urgency === "high" && (
-                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "#fef2f2", padding: "4px 10px", borderRadius: 8, marginBottom: 10 }}>
-                                                        <Zap size={12} color="#ef4444" fill="#ef4444" />
-                                                        <span style={{ fontSize: 12, color: "#ef4444", fontWeight: 800 }}>טיפול דחוף</span>
-                                                    </div>
-                                                )}
-                                                <h2 style={{ fontSize: 24, fontWeight: 900, color: "#0f172a", margin: "0 0 6px" }}>{t.name}</h2>
-                                                <a href={"tel:" + t.phone} style={{ display: "flex", alignItems: "center", gap: 6, color: "#3b82f6", textDecoration: "none", fontWeight: 700, fontSize: 15 }}>
-                                                    <Phone size={14} strokeWidth={2.5} /> {t.phone}
-                                                </a>
-                                            </div>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 6, background: sc.bg, padding: "8px 14px", borderRadius: 20, border: "2px solid " + sc.border }}>
-                                                <sc.Icon size={15} color={sc.color} strokeWidth={2.3} />
-                                                <span style={{ fontSize: 14, color: sc.color, fontWeight: 800 }}>{sc.label}</span>
-                                            </div>
-                                        </div>
+    const grad = ctx.createLinearGradient(x,y,x,chartH+10);
+    grad.addColorStop(0,'#3b82f6');
+    grad.addColorStop(1,'#8b5cf6');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.roundRect(x,y,barW,h,4);
+    ctx.fill();
 
-                                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 24 }}>
-                                            {[
-                                                t.device && { icon: Cpu, label: "מכשיר", value: t.device },
-                                                tc && { icon: tc.Icon, label: "סוג שירות", value: tc.label },
-                                                t.date && { icon: Calendar, label: "תאריך ושעה", value: `${formatDate(t.date)} ${t.time || ""}` },
-                                                t.address && { icon: MapPin, label: "כתובת", value: t.address }
-                                            ].filter(Boolean).map((item, i) => (
-                                                <div key={i} style={{ background: "#f8fafc", borderRadius: 14, padding: "12px 14px" }}>
-                                                    <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                                                        <item.icon size={12} color="#64748b" strokeWidth={2} />
-                                                        <span style={{ fontSize: 10, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase" }}>{item.label}</span>
-                                                    </div>
-                                                    <div style={{ fontSize: 14, fontWeight: 600, color: "#1e293b", lineHeight: 1.3 }}>{item.value}</div>
-                                                </div>
-                                            ))}
-                                        </div>
+    ctx.fillStyle='#1e293b';ctx.font='bold 12px Heebo';ctx.textAlign='center';
+    ctx.fillText(d.count,x+barW/2,y-6);
 
-                                        {t.issue && (
-                                            <div style={{ marginBottom: 14 }}>
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                                                    <MessageSquare size={13} color="#64748b" strokeWidth={2} />
-                                                    <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>תיאור התקלה</span>
-                                                </div>
-                                                <div style={{ background: "#f8fafc", borderRadius: 12, padding: 16, fontSize: 14, color: "#334155", lineHeight: 1.6 }}>
-                                                    {t.issue}
-                                                </div>
-                                            </div>
-                                        )}
+    ctx.fillStyle='#64748b';ctx.font='11px Heebo';
+    ctx.fillText(d.label,x+barW/2,canvas.height-4);
+  });
+}
 
-                                        {t.notes && (
-                                            <div>
-                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                                                    <Tag size={13} color="#64748b" strokeWidth={2} />
-                                                    <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700 }}>הערות פנימיות</span>
-                                                </div>
-                                                <div style={{ background: "#fffbeb", borderRadius: 12, padding: 16, fontSize: 14, color: "#92400e", lineHeight: 1.6, border: "1px dashed #fcd34d" }}>
-                                                    {t.notes}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+// ═══ Tabs ═══
+function switchTab(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
+}
 
-                                    {/* Status updater */}
-                                    <div style={{ background: "#fff", borderRadius: 22, padding: 20, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", marginBottom: 16 }}>
-                                        <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 700, textTransform: "uppercase", marginBottom: 12 }}>עדכון סטטוס</div>
-                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 10 }}>
-                                            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                                                <button key={key} onClick={() => updateStatus(t.id, key)} style={{
-                                                    display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                                                    padding: "11px", borderRadius: 12, border: "2px solid " + (t.status === key ? cfg.color : "#e2e8f0"),
-                                                    background: t.status === key ? cfg.bg : "#fff", color: t.status === key ? cfg.color : "#64748b",
-                                                    fontWeight: t.status === key ? 800 : 500, cursor: "pointer",
-                                                    fontSize: 13, transition: "all 0.15s", fontFamily: "'Heebo', sans-serif"
-                                                }}>
-                                                    <cfg.Icon size={14} strokeWidth={t.status === key ? 2.5 : 2} />
-                                                    {cfg.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+// ═══ Filters ═══
+function setFilter(f, btn){
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderQueue();
+}
 
-                                    <div style={{ display: "flex", gap: 10 }}>
-                                        <button onClick={() => openEdit(t)} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "13px", borderRadius: 14, border: "2px solid #3b82f6", background: "#eff6ff", color: "#3b82f6", fontWeight: 700, cursor: "pointer", fontSize: 14, fontFamily: "'Heebo', sans-serif" }}>
-                                            <Pencil size={15} strokeWidth={2.5} /> ערוך פניה
-                                        </button>
-                                        <button onClick={() => setConfirmDelete(t)} style={{ padding: "13px", borderRadius: 14, border: "2px solid #e2e8f0", background: "#fff", color: "#ef4444", cursor: "pointer" }}>
-                                            <Trash2 size={15} strokeWidth={2.5} />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })()}
+// ═══ Utils ═══
+function esc(s){
+  const d = document.createElement('div');
+  d.textContent = s||'';
+  return d.innerHTML;
+}
+function hashStr(s){
+  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return h;
+}
+function formatDate(d){
+  if(!d) return '';
+  return d.toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function toast(msg,type='info'){
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
 
-                        {/* FORM VIEW */}
-                        {view === "form" && (
-                            <div style={{ animation: "fadeIn 0.2s ease" }}>
-                                <h2 style={{ fontSize: 20, fontWeight: 900, color: "#0f172a", marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
-                                    {editing ? <><Pencil size={19} color="#3b82f6" /> עריכת פניה</> : <><Plus size={19} color="#3b82f6" /> פניה חדשה</>}
-                                </h2>
-
-                                <div style={{ background: "#fff", borderRadius: 22, padding: 22, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", marginBottom: 16 }}>
-                                    <SectionTitle icon={User} label="פרטי לקוח" />
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                                        <FormGroup label="שם לקוח *">
-                                            <input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                                        </FormGroup>
-                                        <FormGroup label="טלפון *">
-                                            <input style={inputStyle} type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-                                        </FormGroup>
-                                    </div>
-                                    <FormGroup label="כתובת (לביקורי בית)">
-                                        <input style={inputStyle} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-                                    </FormGroup>
-                                </div>
-
-                                <div style={{ background: "#fff", borderRadius: 22, padding: 22, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", marginBottom: 16 }}>
-                                    <SectionTitle icon={Wrench} label="פרטי תקלה" />
-                                    <FormGroup label="מכשיר / ציוד">
-                                        <input style={inputStyle} value={form.device} onChange={(e) => setForm({ ...form, device: e.target.value })} />
-                                    </FormGroup>
-                                    <FormGroup label="תיאור התקלה">
-                                        <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 80 }} value={form.issue} onChange={(e) => setForm({ ...form, issue: e.target.value })} />
-                                    </FormGroup>
-                                    <FormGroup label="הערות פנימיות">
-                                        <textarea style={{ ...inputStyle, resize: "vertical", minHeight: 60, background: "#fffbeb" }} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                                    </FormGroup>
-                                </div>
-
-                                <div style={{ background: "#fff", borderRadius: 22, padding: 22, boxShadow: "0 4px 20px rgba(0,0,0,0.03)", marginBottom: 24 }}>
-                                    <SectionTitle icon={Calendar} label="תזמון ולוגיסטיקה" />
-                                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                                        <FormGroup label="סוג שירות">
-                                            <select style={inputStyle} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                                                {Object.entries(TYPE_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                            </select>
-                                        </FormGroup>
-                                        <FormGroup label="דחיפות">
-                                            <select style={inputStyle} value={form.urgency} onChange={(e) => setForm({ ...form, urgency: e.target.value })}>
-                                                {Object.entries(URGENCY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                            </select>
-                                        </FormGroup>
-                                        <FormGroup label="תאריך">
-                                            <input style={inputStyle} type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-                                        </FormGroup>
-                                        <FormGroup label="שעה">
-                                            <input style={inputStyle} type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
-                                        </FormGroup>
-                                    </div>
-                                    <FormGroup label="סטטוס">
-                                        <select style={inputStyle} value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                                            {Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-                                        </select>
-                                    </FormGroup>
-                                </div>
-
-                                <div style={{ display: "flex", gap: 10 }}>
-                                    <button onClick={goBack} style={{ flex: 1, padding: "13px", borderRadius: 14, border: "2px solid #e2e8f0", background: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 15, fontFamily: "'Heebo', sans-serif" }}>
-                                        ביטול
-                                    </button>
-                                    <button onClick={submitForm} style={{
-                                        flex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                                        padding: "13px", borderRadius: 14, border: "none",
-                                        background: "linear-gradient(135deg, #3b82f6, #2563eb)", color: "#fff",
-                                        fontWeight: 800, cursor: "pointer", fontSize: 15, fontFamily: "'Heebo', sans-serif",
-                                        boxShadow: "0 4px 14px rgba(59,130,246,0.35)",
-                                    }}>
-                                        <Save size={16} strokeWidth={2.5} />
-                                        {editing ? "שמור שינויים" : "הוסף פניה"}
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </main>
-                </div>
-            );
-        }
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<RepairManager />);
-    </script>
+// ═══ Keyboard shortcut ═══
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key==='n'){
+    e.preventDefault();
+    switchTab('add');
+    document.getElementById('fName').focus();
+  }
+});
+</script>
 </body>
 </html>
