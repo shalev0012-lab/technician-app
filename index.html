@@ -1,1044 +1,885 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🛠️ TechQueue — ניהול תורים ותקלות</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#f0f4f8;
-  --surface:#ffffff;
-  --surface-hover:#f8fafc;
-  --primary:#3b82f6;
-  --primary-light:#dbeafe;
-  --primary-dark:#1d4ed8;
-  --accent:#8b5cf6;
-  --accent-light:#ede9fe;
-  --success:#10b981;
-  --success-light:#d1fae5;
-  --warning:#f59e0b;
-  --warning-light:#fef3c7;
-  --danger:#ef4444;
-  --danger-light:#fee2e2;
-  --text:#1e293b;
-  --text-secondary:#64748b;
-  --text-muted:#94a3b8;
-  --border:#e2e8f0;
-  --shadow-sm:0 1px 2px rgba(0,0,0,0.04);
-  --shadow:0 4px 16px rgba(0,0,0,0.06);
-  --shadow-lg:0 12px 40px rgba(0,0,0,0.1);
-  --shadow-glow:0 0 30px rgba(59,130,246,0.15);
-  --radius:16px;
-  --radius-sm:10px;
-  --radius-xs:6px;
-  --transition:0.25s cubic-bezier(0.4,0,0.2,1);
-}
-body{
-  font-family:'Heebo',sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  overflow-x:hidden;
-}
-body::before{
-  content:'';
-  position:fixed;
-  top:-50%;right:-30%;
-  width:80vw;height:80vw;
-  background:radial-gradient(circle,rgba(59,130,246,0.06) 0%,transparent 70%);
-  pointer-events:none;
-  z-index:0;
-}
-body::after{
-  content:'';
-  position:fixed;
-  bottom:-40%;left:-20%;
-  width:60vw;height:60vw;
-  background:radial-gradient(circle,rgba(139,92,246,0.05) 0%,transparent 70%);
-  pointer-events:none;
-  z-index:0;
-}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechQ – ניהול תורים ותקלות</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.441.0/dist/umd/lucide.js"></script>
 
-/* ── Header ── */
-.header{
-  background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 50%,#7c3aed 100%);
-  padding:28px 32px;
-  position:sticky;top:0;z-index:100;
-  box-shadow:0 4px 30px rgba(37,99,235,0.25);
-}
-.header-inner{
-  max-width:1400px;margin:0 auto;
-  display:flex;align-items:center;justify-content:space-between;
-  flex-wrap:wrap;gap:16px;
-}
-.logo{display:flex;align-items:center;gap:14px}
-.logo-icon{
-  width:50px;height:50px;
-  background:rgba(255,255,255,0.15);
-  backdrop-filter:blur(10px);
-  border-radius:14px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;
-  border:1px solid rgba(255,255,255,0.2);
-}
-.logo h1{
-  font-family:'Rubik',sans-serif;
-  font-size:24px;font-weight:700;color:#fff;
-  letter-spacing:-0.5px;
-}
-.logo p{font-size:13px;color:rgba(255,255,255,0.7);font-weight:300}
-.header-stats{display:flex;gap:10px;flex-wrap:wrap}
-.stat-chip{
-  background:rgba(255,255,255,0.12);
-  backdrop-filter:blur(10px);
-  border:1px solid rgba(255,255,255,0.15);
-  border-radius:50px;
-  padding:8px 18px;
-  color:#fff;font-size:13px;font-weight:500;
-  display:flex;align-items:center;gap:6px;
-  transition:var(--transition);
-}
-.stat-chip:hover{background:rgba(255,255,255,0.2)}
-.stat-chip .num{font-weight:700;font-size:16px}
+<!-- ═══════════════════════════════════════════════════════════
+     🔥 FIREBASE CONFIGURATION
+     1. היכנס ל: https://console.firebase.google.com
+     2. צור פרויקט → הפעל Firestore Database
+     3. הגדרות פרויקט → העתק את ה-firebaseConfig
+     4. הדבק את הפרטים כאן למטה במקום ה-YOUR_...
+     ═══════════════════════════════════════════════════════════ -->
+<script type="module">
+  import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore,
+           collection, addDoc, updateDoc,
+           deleteDoc, doc, query,
+           orderBy, onSnapshot }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-/* ── Main Layout ── */
-.main{
-  max-width:1400px;margin:0 auto;
-  padding:24px 20px 60px;
-  position:relative;z-index:1;
-}
-
-/* ── Tabs ── */
-.tabs{
-  display:flex;gap:6px;
-  background:var(--surface);
-  border-radius:var(--radius);
-  padding:6px;
-  box-shadow:var(--shadow-sm);
-  margin-bottom:24px;
-  border:1px solid var(--border);
-  overflow-x:auto;
-}
-.tab{
-  flex:1;min-width:120px;
-  padding:12px 16px;
-  border-radius:var(--radius-sm);
-  border:none;background:transparent;
-  font-family:'Heebo',sans-serif;
-  font-size:14px;font-weight:500;
-  color:var(--text-secondary);
-  cursor:pointer;
-  transition:var(--transition);
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  white-space:nowrap;
-}
-.tab:hover{background:var(--bg);color:var(--text)}
-.tab.active{
-  background:var(--primary);
-  color:#fff;
-  box-shadow:0 4px 15px rgba(59,130,246,0.3);
-  font-weight:600;
-}
-.tab .badge{
-  background:rgba(255,255,255,0.25);
-  border-radius:50px;padding:2px 8px;
-  font-size:11px;font-weight:700;
-}
-.tab:not(.active) .badge{
-  background:var(--border);
-  color:var(--text-secondary);
-}
-
-/* ── Content Panels ── */
-.panel{display:none;animation:fadeUp 0.35s ease}
-.panel.active{display:block}
-@keyframes fadeUp{
-  from{opacity:0;transform:translateY(12px)}
-  to{opacity:1;transform:translateY(0)}
-}
-
-/* ── Add Form ── */
-.form-card{
-  background:var(--surface);
-  border-radius:var(--radius);
-  padding:28px;
-  box-shadow:var(--shadow);
-  border:1px solid var(--border);
-  margin-bottom:24px;
-  position:relative;
-  overflow:hidden;
-}
-.form-card::before{
-  content:'';position:absolute;
-  top:0;right:0;left:0;height:4px;
-  background:linear-gradient(90deg,var(--primary),var(--accent));
-}
-.form-title{
-  font-family:'Rubik',sans-serif;
-  font-size:18px;font-weight:600;
-  margin-bottom:20px;
-  display:flex;align-items:center;gap:10px;
-}
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
-  gap:16px;
-}
-.field{display:flex;flex-direction:column;gap:6px}
-.field label{
-  font-size:12px;font-weight:600;
-  color:var(--text-secondary);
-  text-transform:uppercase;
-  letter-spacing:0.5px;
-}
-.field input,.field select,.field textarea{
-  padding:12px 14px;
-  border:2px solid var(--border);
-  border-radius:var(--radius-sm);
-  font-family:'Heebo',sans-serif;
-  font-size:14px;
-  color:var(--text);
-  background:var(--surface);
-  transition:var(--transition);
-  outline:none;
-}
-.field input:focus,.field select:focus,.field textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 4px var(--primary-light);
-}
-.field textarea{resize:vertical;min-height:70px}
-.field-full{grid-column:1/-1}
-.form-actions{
-  display:flex;gap:10px;margin-top:20px;
-  justify-content:flex-start;flex-wrap:wrap;
-}
-
-/* ── Buttons ── */
-.btn{
-  padding:12px 24px;
-  border-radius:var(--radius-sm);
-  border:none;
-  font-family:'Heebo',sans-serif;
-  font-size:14px;font-weight:600;
-  cursor:pointer;
-  transition:var(--transition);
-  display:inline-flex;align-items:center;gap:8px;
-}
-.btn-primary{
-  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-  color:#fff;
-  box-shadow:0 4px 15px rgba(59,130,246,0.3);
-}
-.btn-primary:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 20px rgba(59,130,246,0.4);
-}
-.btn-success{
-  background:linear-gradient(135deg,var(--success),#059669);
-  color:#fff;box-shadow:0 4px 15px rgba(16,185,129,0.3);
-}
-.btn-success:hover{transform:translateY(-1px)}
-.btn-danger{
-  background:linear-gradient(135deg,var(--danger),#dc2626);
-  color:#fff;box-shadow:0 4px 15px rgba(239,68,68,0.3);
-}
-.btn-danger:hover{transform:translateY(-1px)}
-.btn-ghost{
-  background:transparent;color:var(--text-secondary);
-  border:2px solid var(--border);
-}
-.btn-ghost:hover{background:var(--bg);color:var(--text)}
-.btn-sm{padding:8px 14px;font-size:12px;border-radius:var(--radius-xs)}
-
-/* ── Ticket Cards ── */
-.tickets-list{display:flex;flex-direction:column;gap:12px}
-.ticket{
-  background:var(--surface);
-  border-radius:var(--radius);
-  border:1px solid var(--border);
-  padding:20px 24px;
-  box-shadow:var(--shadow-sm);
-  transition:var(--transition);
-  position:relative;
-  overflow:hidden;
-}
-.ticket::before{
-  content:'';position:absolute;
-  top:0;right:0;bottom:0;width:4px;
-}
-.ticket.status-waiting::before{background:var(--warning)}
-.ticket.status-progress::before{background:var(--primary)}
-.ticket.status-done::before{background:var(--success)}
-.ticket.status-cancelled::before{background:var(--danger)}
-.ticket:hover{
-  box-shadow:var(--shadow);
-  transform:translateX(-2px);
-}
-.ticket-header{
-  display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:12px;flex-wrap:wrap;gap:8px;
-}
-.ticket-customer{
-  display:flex;align-items:center;gap:12px;
-}
-.ticket-avatar{
-  width:44px;height:44px;
-  border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;font-weight:700;color:#fff;
-}
-.ticket-name{font-weight:700;font-size:16px;line-height:1.2}
-.ticket-phone{
-  font-size:13px;color:var(--text-secondary);
-  direction:ltr;text-align:right;
-  display:flex;align-items:center;gap:4px;
-}
-.ticket-phone a{color:var(--primary);text-decoration:none}
-.ticket-phone a:hover{text-decoration:underline}
-.ticket-badges{display:flex;gap:6px;flex-wrap:wrap}
-.badge-pill{
-  padding:4px 12px;
-  border-radius:50px;
-  font-size:11px;font-weight:600;
-  display:inline-flex;align-items:center;gap:4px;
-}
-.badge-home{background:#dbeafe;color:#1d4ed8}
-.badge-lab{background:#ede9fe;color:#7c3aed}
-.badge-remote{background:#d1fae5;color:#047857}
-.badge-waiting{background:var(--warning-light);color:#92400e}
-.badge-progress{background:var(--primary-light);color:var(--primary-dark)}
-.badge-done{background:var(--success-light);color:#065f46}
-.badge-cancelled{background:var(--danger-light);color:#991b1b}
-.badge-urgent{background:#fee2e2;color:#dc2626;animation:pulse-badge 2s infinite}
-@keyframes pulse-badge{
-  0%,100%{opacity:1}50%{opacity:0.6}
-}
-.ticket-body{margin:10px 0}
-.ticket-issue{
-  font-size:14px;line-height:1.7;
-  color:var(--text);
-  background:var(--bg);
-  padding:12px 16px;
-  border-radius:var(--radius-sm);
-  border-right:3px solid var(--border);
-}
-.ticket-meta{
-  display:flex;align-items:center;gap:16px;
-  margin-top:12px;flex-wrap:wrap;
-  font-size:12px;color:var(--text-muted);
-}
-.ticket-meta span{display:flex;align-items:center;gap:4px}
-.ticket-actions{
-  display:flex;gap:6px;margin-top:14px;flex-wrap:wrap;
-}
-.ticket-notes{margin-top:10px}
-.ticket-notes textarea{
-  width:100%;padding:10px 14px;
-  border:2px solid var(--border);
-  border-radius:var(--radius-sm);
-  font-family:'Heebo',sans-serif;
-  font-size:13px;resize:vertical;
-  min-height:50px;outline:none;
-  transition:var(--transition);
-}
-.ticket-notes textarea:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 4px var(--primary-light);
-}
-
-/* ── Search & Filter ── */
-.toolbar{
-  display:flex;gap:10px;margin-bottom:20px;
-  flex-wrap:wrap;align-items:center;
-}
-.search-box{
-  flex:1;min-width:200px;
-  position:relative;
-}
-.search-box input{
-  width:100%;
-  padding:12px 14px 12px 42px;
-  border:2px solid var(--border);
-  border-radius:var(--radius-sm);
-  font-family:'Heebo',sans-serif;
-  font-size:14px;outline:none;
-  background:var(--surface);
-  transition:var(--transition);
-}
-.search-box input:focus{
-  border-color:var(--primary);
-  box-shadow:0 0 0 4px var(--primary-light);
-}
-.search-box::before{
-  content:'🔍';
-  position:absolute;left:14px;top:50%;
-  transform:translateY(-50%);
-  font-size:16px;
-}
-.filter-btn{
-  padding:12px 18px;
-  border:2px solid var(--border);
-  border-radius:var(--radius-sm);
-  background:var(--surface);
-  font-family:'Heebo',sans-serif;
-  font-size:13px;font-weight:500;
-  cursor:pointer;
-  transition:var(--transition);
-  display:flex;align-items:center;gap:6px;
-  color:var(--text-secondary);
-}
-.filter-btn:hover,.filter-btn.active{
-  border-color:var(--primary);
-  color:var(--primary);
-  background:var(--primary-light);
-}
-
-/* ── Empty State ── */
-.empty-state{
-  text-align:center;
-  padding:60px 20px;
-  color:var(--text-muted);
-}
-.empty-state .icon{font-size:56px;margin-bottom:16px;opacity:0.5}
-.empty-state h3{font-size:18px;color:var(--text-secondary);margin-bottom:6px}
-.empty-state p{font-size:14px}
-
-/* ── Stats Cards ── */
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:16px;margin-bottom:24px;
-}
-.stat-card{
-  background:var(--surface);
-  border-radius:var(--radius);
-  padding:22px;
-  border:1px solid var(--border);
-  box-shadow:var(--shadow-sm);
-  transition:var(--transition);
-}
-.stat-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
-.stat-card .stat-icon{font-size:28px;margin-bottom:8px}
-.stat-card .stat-val{font-size:32px;font-weight:800;font-family:'Rubik',sans-serif}
-.stat-card .stat-label{font-size:12px;color:var(--text-muted);font-weight:500;margin-top:2px}
-
-/* ── Modal ── */
-.modal-overlay{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:rgba(15,23,42,0.5);
-  backdrop-filter:blur(4px);
-  z-index:200;display:none;
-  align-items:center;justify-content:center;
-  padding:20px;
-}
-.modal-overlay.show{display:flex}
-.modal{
-  background:var(--surface);
-  border-radius:var(--radius);
-  padding:28px;
-  max-width:500px;width:100%;
-  box-shadow:var(--shadow-lg);
-  animation:modalIn 0.3s ease;
-}
-@keyframes modalIn{
-  from{opacity:0;transform:scale(0.95)}
-  to{opacity:1;transform:scale(1)}
-}
-.modal h3{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.modal-actions{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
-
-/* ── Toast ── */
-.toast-container{
-  position:fixed;bottom:24px;left:24px;
-  z-index:300;display:flex;flex-direction:column;gap:8px;
-}
-.toast{
-  padding:14px 20px;
-  border-radius:var(--radius-sm);
-  color:#fff;font-size:14px;font-weight:500;
-  box-shadow:var(--shadow-lg);
-  animation:toastIn 0.3s ease,toastOut 0.3s ease 2.7s forwards;
-  display:flex;align-items:center;gap:8px;
-}
-.toast-success{background:linear-gradient(135deg,var(--success),#059669)}
-.toast-error{background:linear-gradient(135deg,var(--danger),#dc2626)}
-.toast-info{background:linear-gradient(135deg,var(--primary),var(--primary-dark))}
-@keyframes toastIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
-@keyframes toastOut{to{opacity:0;transform:translateX(-20px)}}
-
-/* ── Priority Indicator ── */
-.priority-dot{
-  width:8px;height:8px;border-radius:50%;display:inline-block;
-}
-.priority-low{background:var(--success)}
-.priority-medium{background:var(--warning)}
-.priority-high{background:var(--danger)}
-
-/* ── Responsive ── */
-@media(max-width:768px){
-  .header{padding:18px 16px}
-  .logo h1{font-size:18px}
-  .header-stats{display:none}
-  .main{padding:16px 12px 40px}
-  .form-card{padding:18px}
-  .form-grid{grid-template-columns:1fr}
-  .ticket{padding:16px}
-  .stats-grid{grid-template-columns:repeat(2,1fr)}
-  .tabs{gap:2px;padding:4px}
-  .tab{padding:10px 8px;font-size:12px;min-width:auto}
-}
-
-/* ── Scrollbar ── */
-::-webkit-scrollbar{width:6px;height:6px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:var(--text-muted)}
-
-/* ── Print ── */
-@media print{
-  .header,.tabs,.form-card,.toolbar,.ticket-actions,.btn,.toast-container{display:none!important}
-  .ticket{break-inside:avoid;box-shadow:none;border:1px solid #ccc}
-}
-</style>
-</head>
-<body>
-
-<!-- ═══ HEADER ═══ -->
-<header class="header">
-  <div class="header-inner">
-    <div class="logo">
-      <div class="logo-icon">⚡</div>
-      <div>
-        <h1>TechQueue</h1>
-        <p>מערכת ניהול תורים ותקלות</p>
-      </div>
-    </div>
-    <div class="header-stats">
-      <div class="stat-chip">⏳ ממתינים <span class="num" id="hdrWaiting">0</span></div>
-      <div class="stat-chip">🔧 בטיפול <span class="num" id="hdrProgress">0</span></div>
-      <div class="stat-chip">✅ הושלמו <span class="num" id="hdrDone">0</span></div>
-    </div>
-  </div>
-</header>
-
-<!-- ═══ MAIN ═══ -->
-<div class="main">
-
-  <!-- Tabs -->
-  <div class="tabs">
-    <button class="tab active" data-tab="queue" onclick="switchTab('queue')">
-      📋 תור פעיל <span class="badge" id="tabQueueBadge">0</span>
-    </button>
-    <button class="tab" data-tab="add" onclick="switchTab('add')">
-      ➕ הוספת לקוח
-    </button>
-    <button class="tab" data-tab="history" onclick="switchTab('history')">
-      📁 ארכיון <span class="badge" id="tabHistoryBadge">0</span>
-    </button>
-    <button class="tab" data-tab="stats" onclick="switchTab('stats')">
-      📊 סטטיסטיקות
-    </button>
-  </div>
-
-  <!-- ═══ PANEL: Add ═══ -->
-  <div class="panel" id="panelAdd">
-    <div class="form-card">
-      <div class="form-title">🆕 פתיחת קריאה חדשה</div>
-      <div class="form-grid">
-        <div class="field">
-          <label>👤 שם הלקוח</label>
-          <input type="text" id="fName" placeholder="ישראל ישראלי" autocomplete="off">
-        </div>
-        <div class="field">
-          <label>📱 טלפון</label>
-          <input type="tel" id="fPhone" placeholder="050-0000000" dir="ltr">
-        </div>
-        <div class="field">
-          <label>🔧 סוג שירות</label>
-          <select id="fService">
-            <option value="home">🏠 אצל הלקוח</option>
-            <option value="lab">🖥️ במעבדה</option>
-            <option value="remote">🌐 שליטה מרחוק</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>⚠️ דחיפות</label>
-          <select id="fPriority">
-            <option value="low">🟢 רגיל</option>
-            <option value="medium">🟡 בינוני</option>
-            <option value="high">🔴 דחוף</option>
-          </select>
-        </div>
-        <div class="field field-full">
-          <label>🔍 תיאור התקלה</label>
-          <textarea id="fIssue" placeholder="תאר את הבעיה בקצרה..."></textarea>
-        </div>
-        <div class="field">
-          <label>💰 עלות משוערת (₪)</label>
-          <input type="number" id="fCost" placeholder="0" min="0">
-        </div>
-        <div class="field">
-          <label>🏷️ מכשיר / דגם</label>
-          <input type="text" id="fDevice" placeholder='למשל: Lenovo ThinkPad' autocomplete="off">
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-primary" onclick="addTicket()">📌 הוסף לתור</button>
-        <button class="btn btn-ghost" onclick="clearForm()">🗑️ נקה טופס</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══ PANEL: Queue ═══ -->
-  <div class="panel active" id="panelQueue">
-    <div class="toolbar">
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="חיפוש לפי שם, טלפון או תקלה..." oninput="renderQueue()">
-      </div>
-      <button class="filter-btn" data-filter="all" onclick="setFilter('all',this)">🗂️ הכל</button>
-      <button class="filter-btn" data-filter="waiting" onclick="setFilter('waiting',this)">⏳ ממתין</button>
-      <button class="filter-btn" data-filter="progress" onclick="setFilter('progress',this)">🔧 בטיפול</button>
-      <button class="filter-btn" data-filter="home" onclick="setFilter('home',this)">🏠 בית</button>
-      <button class="filter-btn" data-filter="lab" onclick="setFilter('lab',this)">🖥️ מעבדה</button>
-      <button class="filter-btn" data-filter="remote" onclick="setFilter('remote',this)">🌐 מרחוק</button>
-    </div>
-    <div class="tickets-list" id="queueList"></div>
-  </div>
-
-  <!-- ═══ PANEL: History ═══ -->
-  <div class="panel" id="panelHistory">
-    <div class="toolbar">
-      <div class="search-box">
-        <input type="text" id="searchHistory" placeholder="חיפוש בארכיון..." oninput="renderHistory()">
-      </div>
-    </div>
-    <div class="tickets-list" id="historyList"></div>
-  </div>
-
-  <!-- ═══ PANEL: Stats ═══ -->
-  <div class="panel" id="panelStats">
-    <div class="stats-grid" id="statsGrid"></div>
-    <div class="form-card" style="margin-top:20px">
-      <div class="form-title">📈 סיכום חודשי</div>
-      <canvas id="monthlyChart" height="260" style="width:100%;max-height:260px"></canvas>
-    </div>
-  </div>
-
-</div>
-
-<!-- ═══ Confirm Modal ═══ -->
-<div class="modal-overlay" id="confirmModal">
-  <div class="modal">
-    <h3 id="confirmTitle">⚠️ אישור</h3>
-    <p id="confirmMsg"></p>
-    <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">ביטול</button>
-      <button class="btn btn-danger" id="confirmBtn" onclick="confirmAction()">אישור</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ Toast Container ═══ -->
-<div class="toast-container" id="toastContainer"></div>
-
-<!-- ═══ Firebase SDK ═══ -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-<script>
-// ╔══════════════════════════════════════════════════════╗
-// ║  🔧 Firebase Configuration — CHANGE THESE VALUES!   ║
-// ╚══════════════════════════════════════════════════════╝
-const firebaseConfig = {
-  apiKey: "AIzaSyBVktHLR4lLddC_5GB6N0ApS0whCBMIRgw",
+  const firebaseConfig = {
+    apiKey: "AIzaSyBVktHLR4lLddC_5GB6N0ApS0whCBMIRgw",
   authDomain: "technician-app-74278.firebaseapp.com",
   projectId: "technician-app-74278",
   storageBucket: "technician-app-74278.firebasestorage.app",
   messagingSenderId: "1006801375264",
   appId: "1:1006801375264:web:dbfb9657170f3eaef12c45"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const ticketsRef = db.collection('tickets');
-
-// ═══ State ═══
-let tickets = [];
-let currentFilter = 'all';
-let pendingAction = null;
-
-// ═══ Real-time Listener ═══
-ticketsRef.orderBy('createdAt','desc').onSnapshot(snapshot => {
-  tickets = [];
-  snapshot.forEach(doc => {
-    tickets.push({ id: doc.id, ...doc.data() });
-  });
-  renderAll();
-}, err => {
-  console.error('Firestore error:', err);
-  toast('❌ שגיאה בחיבור למסד הנתונים','error');
-});
-
-// ═══ Add Ticket ═══
-async function addTicket(){
-  const name = document.getElementById('fName').value.trim();
-  const phone = document.getElementById('fPhone').value.trim();
-  const service = document.getElementById('fService').value;
-  const priority = document.getElementById('fPriority').value;
-  const issue = document.getElementById('fIssue').value.trim();
-  const cost = document.getElementById('fCost').value || 0;
-  const device = document.getElementById('fDevice').value.trim();
-
-  if(!name || !phone){
-    toast('⚠️ נא למלא שם וטלפון','error');
-    return;
-  }
-  if(!issue){
-    toast('⚠️ נא לתאר את התקלה','error');
-    return;
-  }
-
-  try{
-    await ticketsRef.add({
-      name, phone, service, priority, issue,
-      cost: Number(cost),
-      device,
-      status: 'waiting',
-      notes: '',
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      completedAt: null,
-      queueNumber: Date.now()
-    });
-    clearForm();
-    toast('✅ הלקוח נוסף לתור בהצלחה!','success');
-    switchTab('queue');
-  } catch(e){
-    console.error(e);
-    toast('❌ שגיאה בשמירת הנתונים','error');
-  }
-}
-
-function clearForm(){
-  ['fName','fPhone','fIssue','fCost','fDevice'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fService').value='home';
-  document.getElementById('fPriority').value='low';
-}
-
-// ═══ Update Status ═══
-async function updateStatus(id, status){
-  const data = { status, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
-  if(status === 'done' || status === 'cancelled'){
-    data.completedAt = firebase.firestore.FieldValue.serverTimestamp();
-  }
-  await ticketsRef.doc(id).update(data);
-  const labels = {waiting:'⏳ ממתין',progress:'🔧 בטיפול',done:'✅ הושלם',cancelled:'❌ בוטל'};
-  toast(`${labels[status] || status}`,'success');
-}
-
-// ═══ Save Notes ═══
-let noteTimers = {};
-function saveNotes(id, val){
-  clearTimeout(noteTimers[id]);
-  noteTimers[id] = setTimeout(async()=>{
-    await ticketsRef.doc(id).update({ notes: val, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-  }, 800);
-}
-
-// ═══ Delete ═══
-function confirmDelete(id){
-  pendingAction = async()=>{
-    await ticketsRef.doc(id).delete();
-    toast('🗑️ הקריאה נמחקה','info');
-    closeModal();
   };
-  document.getElementById('confirmTitle').textContent = '🗑️ מחיקת קריאה';
-  document.getElementById('confirmMsg').textContent = 'האם למחוק את הקריאה לצמיתות?';
-  document.getElementById('confirmModal').classList.add('show');
-}
+  /* ─────────────────────────────────────────────── */
 
-function confirmAction(){
-  if(pendingAction) pendingAction();
-  pendingAction = null;
-}
-function closeModal(){
-  document.getElementById('confirmModal').classList.remove('show');
-  pendingAction = null;
-}
+  /* אם לא מולא config — לא מנסה להתחבר */
+  if (firebaseConfig.apiKey === "YOUR_API_KEY") return;
 
-// ═══ Rendering ═══
-function renderAll(){
-  renderQueue();
-  renderHistory();
-  renderStats();
-  updateHeaderStats();
-}
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    const col = collection(db, "customers");
 
-function updateHeaderStats(){
-  const w = tickets.filter(t=>t.status==='waiting').length;
-  const p = tickets.filter(t=>t.status==='progress').length;
-  const d = tickets.filter(t=>t.status==='done').length;
-  document.getElementById('hdrWaiting').textContent = w;
-  document.getElementById('hdrProgress').textContent = p;
-  document.getElementById('hdrDone').textContent = d;
-  document.getElementById('tabQueueBadge').textContent = w + p;
-  document.getElementById('tabHistoryBadge').textContent = d + tickets.filter(t=>t.status==='cancelled').length;
-}
+    window.FB = {
+      add:    (data)     => addDoc(col, { ...data, createdAt: Date.now() }),
+      update: (id, data) => updateDoc(doc(db, "customers", id), data),
+      delete: (id)       => deleteDoc(doc(db, "customers", id)),
+      listen: (cb)       => onSnapshot(query(col, orderBy("createdAt","desc")), snap => {
+        cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      }),
+    };
 
-function getActiveTickets(){
-  return tickets.filter(t=> t.status==='waiting' || t.status==='progress');
-}
-function getArchiveTickets(){
-  return tickets.filter(t=> t.status==='done' || t.status==='cancelled');
-}
-
-function matchSearch(t, query){
-  if(!query) return true;
-  const q = query.toLowerCase();
-  return (t.name||'').toLowerCase().includes(q)
-    || (t.phone||'').includes(q)
-    || (t.issue||'').toLowerCase().includes(q)
-    || (t.device||'').toLowerCase().includes(q);
-}
-
-function matchFilter(t){
-  if(currentFilter==='all') return true;
-  if(currentFilter==='waiting' || currentFilter==='progress') return t.status===currentFilter;
-  if(currentFilter==='home'||currentFilter==='lab'||currentFilter==='remote') return t.service===currentFilter;
-  return true;
-}
-
-function renderQueue(){
-  const query = document.getElementById('searchInput').value.trim();
-  const list = document.getElementById('queueList');
-  const active = getActiveTickets().filter(t=> matchSearch(t,query) && matchFilter(t));
-
-  // Sort: high priority first, then by creation
-  active.sort((a,b)=>{
-    const po = {high:0,medium:1,low:2};
-    if(po[a.priority]!==po[b.priority]) return po[a.priority]-po[b.priority];
-    const aT = a.createdAt?.toMillis?.()||0;
-    const bT = b.createdAt?.toMillis?.()||0;
-    return aT - bT;
-  });
-
-  if(!active.length){
-    list.innerHTML = `<div class="empty-state">
-      <div class="icon">📭</div>
-      <h3>אין קריאות פעילות</h3>
-      <p>הוסף לקוח חדש כדי להתחיל</p>
-    </div>`;
-    return;
+    document.dispatchEvent(new Event("fb-ready"));
+  } catch(e) {
+    console.warn("Firebase init failed:", e.message);
   }
-  list.innerHTML = active.map(t=>ticketHTML(t,false)).join('');
+</script>
+
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Heebo', sans-serif;
+  background: #f8f9fb;
+  color: #111827;
+  min-height: 100vh;
+  direction: rtl;
+  -webkit-font-smoothing: antialiased;
+}
+a { text-decoration: none; color: inherit; }
+button { font-family: 'Heebo', sans-serif; cursor: pointer; border: none; outline: none; }
+input, textarea, select { font-family: 'Heebo', sans-serif; outline: none; }
+input::placeholder, textarea::placeholder { color: #b0b7c3; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: #dde1e9; border-radius: 99px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; top: 18px; left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  color: #fff; padding: 10px 22px; border-radius: 50px;
+  font-weight: 600; font-size: 13px; z-index: 9999;
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 6px 24px rgba(0,0,0,.13); white-space: nowrap;
+  display: flex; align-items: center; gap: 7px;
+}
+#toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── MODAL ── */
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(17,24,39,.3); backdrop-filter: blur(5px);
+  z-index: 800; display: flex;
+  align-items: center; justify-content: center; padding: 16px;
+  opacity: 0; pointer-events: none; transition: opacity .2s;
+}
+.overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 20px;
+  padding: 30px 26px; width: 100%; max-width: 380px;
+  text-align: center; box-shadow: 0 24px 64px rgba(17,24,39,.14);
+  transform: translateY(16px) scale(.97);
+  transition: transform .25s cubic-bezier(.34,1.4,.64,1);
+}
+.overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #fef2f2; color: #dc2626;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 16px;
+}
+.modal-icon svg { width: 24px; height: 24px; }
+.modal-title { font-size: 18px; font-weight: 700; color: #111827; margin-bottom: 8px; }
+.modal-text  { color: #6b7280; font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+.modal-btns  { display: flex; gap: 10px; justify-content: center; }
+
+/* ── HEADER ── */
+#header {
+  background: #fff;
+  border-bottom: 1px solid #f0f1f4;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 1px 0 #f0f1f4;
+}
+.header-inner {
+  max-width: 780px; margin: 0 auto; padding: 13px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-icon {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  display: flex; align-items: center; justify-content: center; color: #fff;
+}
+.logo-icon svg { width: 20px; height: 20px; }
+.logo-title { font-size: 18px; font-weight: 800; color: #111827; letter-spacing: -.025em; }
+.logo-sub   { font-size: 11px; color: #9ca3af; font-weight: 400; margin-top: 1px; }
+
+/* ── FB STATUS ── */
+#fb-badge {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; font-weight: 600; color: #9ca3af;
+  background: #f3f4f6; border-radius: 99px; padding: 4px 10px;
+}
+.fb-dot { width: 6px; height: 6px; border-radius: 50%; background: #f59e0b; }
+.fb-dot.live   { background: #10b981; }
+.fb-dot.local  { background: #f59e0b; }
+
+/* ── MAIN ── */
+#main { max-width: 780px; margin: 0 auto; padding: 20px 16px 100px; }
+
+/* ── STATS ── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  gap: 10px; margin-bottom: 20px;
+}
+.stat-btn {
+  background: #fff; border: 1.5px solid #f0f1f4; border-radius: 14px;
+  padding: 13px 8px; display: flex; flex-direction: column;
+  align-items: center; gap: 4px; cursor: pointer; transition: all .18s;
+  box-shadow: 0 1px 3px rgba(17,24,39,.04);
+}
+.stat-btn:hover { border-color: #dde1e9; box-shadow: 0 2px 8px rgba(17,24,39,.07); }
+.stat-btn svg   { width: 18px; height: 18px; color: #9ca3af; }
+.stat-btn.active { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 3px rgba(59,130,246,.08); }
+.stat-btn.active svg { color: #2563eb; }
+.stat-count { font-size: 24px; font-weight: 800; line-height: 1; color: #111827; }
+.stat-btn.active .stat-count { color: #2563eb; }
+.stat-label { font-size: 11px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+/* ── FORM CARD ── */
+#form-card {
+  background: #fff; border-radius: 18px;
+  padding: 22px 20px; border: 1.5px solid #f0f1f4;
+  margin-bottom: 18px; box-shadow: 0 2px 12px rgba(17,24,39,.05);
+}
+.form-title {
+  font-size: 15px; font-weight: 700; color: #111827;
+  margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+}
+.form-title svg { width: 16px; height: 16px; color: #3b82f6; }
+.form-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px;
+}
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg.full { grid-column: 1 / -1; }
+label { font-size: 11px; color: #6b7280; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.inp {
+  background: #f9fafb; border: 1.5px solid #e5e7eb;
+  border-radius: 9px; padding: 9px 12px;
+  color: #111827; font-size: 14px; font-family: 'Heebo', sans-serif;
+  width: 100%; transition: border-color .18s, box-shadow .18s;
+}
+.inp:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+textarea.inp { resize: vertical; min-height: 72px; }
+select.inp   { cursor: pointer; }
+.toggle-group { display: flex; gap: 7px; }
+.toggle-btn {
+  flex: 1; padding: 8px 4px; border-radius: 9px; border: 1.5px solid #e5e7eb;
+  background: #f9fafb; color: #6b7280; cursor: pointer;
+  font-size: 12px; font-family: 'Heebo', sans-serif; font-weight: 600;
+  transition: all .15s; display: flex; align-items: center; justify-content: center; gap: 5px;
+}
+.toggle-btn svg { width: 13px; height: 13px; }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; justify-content: flex-end; }
+
+/* ── BUTTONS ── */
+.btn-primary {
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: #fff; border: none; border-radius: 10px; padding: 10px 20px;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 700;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  box-shadow: 0 2px 8px rgba(59,130,246,.3); transition: opacity .15s;
+}
+.btn-primary svg { width: 15px; height: 15px; }
+.btn-primary:hover { opacity: .9; }
+.btn-secondary {
+  background: transparent; color: #6b7280;
+  border: 1.5px solid #e5e7eb; border-radius: 10px; padding: 10px 18px;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer;
+  transition: all .15s;
+}
+.btn-secondary:hover { border-color: #d1d5db; color: #374151; }
+.btn-cancel {
+  padding: 10px 22px; border-radius: 9px; border: 1.5px solid #e5e7eb;
+  background: transparent; color: #6b7280; cursor: pointer;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 600;
+}
+.btn-delete {
+  padding: 10px 22px; border-radius: 9px; border: none;
+  background: #dc2626; color: #fff; cursor: pointer;
+  font-family: 'Heebo', sans-serif; font-size: 14px; font-weight: 700;
 }
 
-function renderHistory(){
-  const query = document.getElementById('searchHistory')?.value?.trim() || '';
-  const list = document.getElementById('historyList');
-  const archive = getArchiveTickets().filter(t=> matchSearch(t,query));
-
-  if(!archive.length){
-    list.innerHTML = `<div class="empty-state">
-      <div class="icon">📂</div>
-      <h3>הארכיון ריק</h3>
-      <p>קריאות שהושלמו או בוטלו יופיעו כאן</p>
-    </div>`;
-    return;
-  }
-  list.innerHTML = archive.map(t=>ticketHTML(t,true)).join('');
+/* ── SEARCH ── */
+.search-wrap {
+  display: flex; align-items: center; gap: 10px;
+  background: #fff; border: 1.5px solid #e5e7eb;
+  border-radius: 13px; padding: 0 14px; margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(17,24,39,.04);
+  transition: border-color .18s;
 }
+.search-wrap:focus-within { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.08); }
+.search-wrap svg { width: 16px; height: 16px; color: #9ca3af; flex-shrink: 0; }
+.search-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  color: #111827; font-size: 14px; padding: 13px 0;
+  font-family: 'Heebo', sans-serif;
+}
+.clear-btn {
+  background: none; border: none; color: #9ca3af; cursor: pointer;
+  padding: 2px; display: flex; align-items: center;
+}
+.clear-btn svg { width: 14px; height: 14px; }
 
-function ticketHTML(t, isArchive){
-  const serviceMap = {home:{label:'🏠 אצל הלקוח',cls:'badge-home'},lab:{label:'🖥️ במעבדה',cls:'badge-lab'},remote:{label:'🌐 מרחוק',cls:'badge-remote'}};
-  const statusMap = {waiting:{label:'⏳ ממתין',cls:'badge-waiting'},progress:{label:'🔧 בטיפול',cls:'badge-progress'},done:{label:'✅ הושלם',cls:'badge-done'},cancelled:{label:'❌ בוטל',cls:'badge-cancelled'}};
-  const priorityMap = {low:{label:'רגיל',cls:'priority-low'},medium:{label:'בינוני',cls:'priority-medium'},high:{label:'דחוף',cls:'priority-high'}};
-  const avatarColors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#ef4444','#06b6d4'];
-  const color = avatarColors[Math.abs(hashStr(t.name||''))%avatarColors.length];
-  const initials = (t.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2);
-  const svc = serviceMap[t.service]||serviceMap.home;
-  const sts = statusMap[t.status]||statusMap.waiting;
-  const pri = priorityMap[t.priority]||priorityMap.low;
-  const created = t.createdAt?.toDate?.() ? formatDate(t.createdAt.toDate()) : '';
-  const completed = t.completedAt?.toDate?.() ? formatDate(t.completedAt.toDate()) : '';
+/* ── EMPTY ── */
+.empty-state { text-align: center; padding: 64px 20px; }
+.empty-icon  { margin-bottom: 14px; display: flex; justify-content: center; color: #e5e7eb; }
+.empty-icon svg { width: 52px; height: 52px; }
+.empty-text  { margin: 0 0 20px; font-size: 15px; color: #6b7280; }
 
-  let actions = '';
-  if(!isArchive){
-    if(t.status==='waiting'){
-      actions = `
-        <button class="btn btn-sm btn-primary" onclick="updateStatus('${t.id}','progress')">🔧 התחל טיפול</button>
-        <button class="btn btn-sm btn-success" onclick="updateStatus('${t.id}','done')">✅ סיים</button>
-        <button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','cancelled')">❌ בטל</button>`;
-    } else if(t.status==='progress'){
-      actions = `
-        <button class="btn btn-sm btn-success" onclick="updateStatus('${t.id}','done')">✅ סיים טיפול</button>
-        <button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','waiting')">⏳ החזר להמתנה</button>`;
-    }
-  } else {
-    actions = `<button class="btn btn-sm btn-ghost" onclick="updateStatus('${t.id}','waiting')">🔄 פתח מחדש</button>`;
-  }
-  actions += `<button class="btn btn-sm btn-danger" onclick="confirmDelete('${t.id}')">🗑️</button>`;
+/* ── LIST ── */
+#list { display: flex; flex-direction: column; gap: 10px; }
+.card {
+  background: #fff; border: 1.5px solid #f0f1f4; border-radius: 16px;
+  padding: 15px 18px; transition: box-shadow .18s, border-color .18s;
+  box-shadow: 0 1px 3px rgba(17,24,39,.04);
+  animation: fadeUp .25s ease both;
+}
+.card:hover { box-shadow: 0 4px 16px rgba(17,24,39,.08); border-color: #e5e7eb; }
+.card.urgent { border-color: rgba(220,38,38,.2); background: #fffafa; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
-  return `
-  <div class="ticket status-${t.status}">
-    <div class="ticket-header">
-      <div class="ticket-customer">
-        <div class="ticket-avatar" style="background:${color}">${initials}</div>
-        <div>
-          <div class="ticket-name">${esc(t.name)}</div>
-          <div class="ticket-phone">📞 <a href="tel:${esc(t.phone)}">${esc(t.phone)}</a></div>
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.card-left { display: flex; flex-direction: column; gap: 3px; }
+.card-name { font-size: 15px; font-weight: 700; color: #111827; display: flex; align-items: center; gap: 6px; }
+.urgent-dot { width: 7px; height: 7px; background: #dc2626; border-radius: 50%; flex-shrink: 0; }
+.card-phone {
+  font-size: 13px; color: #2563eb; font-weight: 500;
+  display: flex; align-items: center; gap: 4px; transition: opacity .15s;
+}
+.card-phone:hover { opacity: .75; }
+.card-phone svg { width: 12px; height: 12px; }
+.card-badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
+.badge {
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border-radius: 99px; white-space: nowrap;
+  display: flex; align-items: center; gap: 4px;
+}
+.badge svg { width: 10px; height: 10px; }
+.card-device {
+  font-size: 12px; color: #374151; font-weight: 600; margin-top: 7px;
+  display: flex; align-items: center; gap: 6px;
+  background: #f3f4f6; border-radius: 8px; padding: 4px 9px;
+  width: fit-content;
+}
+.card-device svg { width: 12px; height: 12px; color: #6b7280; }
+.card-issue {
+  font-size: 13px; color: #4b5563; margin-top: 8px; line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.card-issue svg { width: 12px; height: 12px; color: #9ca3af; flex-shrink: 0; margin-top: 2px; }
+.card-notes {
+  font-size: 12px; color: #9ca3af; margin-top: 4px;
+  line-height: 1.5; font-style: italic; display: flex; align-items: flex-start; gap: 6px;
+}
+.card-notes svg { width: 11px; height: 11px; color: #c4c9d4; flex-shrink: 0; margin-top: 2px; }
+.card-bottom {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 12px; padding-top: 11px; border-top: 1px solid #f3f4f6;
+}
+.card-date { font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 4px; }
+.card-date svg { width: 11px; height: 11px; }
+.card-actions { display: flex; gap: 3px; }
+.act-btn {
+  background: none; border: none; cursor: pointer; padding: 5px 7px;
+  border-radius: 7px; transition: background .15s; color: #9ca3af;
+  display: flex; align-items: center;
+}
+.act-btn svg { width: 15px; height: 15px; }
+.act-btn:hover          { background: #f3f4f6; color: #374151; }
+.act-btn.green          { color: #059669; }
+.act-btn.green:hover    { background: #ecfdf5; }
+.act-btn.red            { color: #dc2626; }
+.act-btn.red:hover      { background: #fef2f2; }
+
+/* ── LOADING ── */
+#loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  height: 100vh; background: #f8f9fb;
+}
+.spinner {
+  width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid #e5e7eb; border-top-color: #3b82f6;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 480px) {
+  .stats-row      { gap: 6px; }
+  .stat-btn       { padding: 10px 4px; }
+  .stat-count     { font-size: 19px; }
+  .stat-label     { font-size: 10px; }
+  .form-grid      { grid-template-columns: 1fr; }
+  .hide-mobile    { display: none; }
+  .header-inner   { padding: 11px 14px; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- HEADER -->
+<header id="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon"><i data-lucide="monitor-cog"></i></div>
+      <div>
+        <div class="logo-title">TechQ</div>
+        <div class="logo-sub">ניהול תורים ותקלות</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div id="fb-badge">
+        <div class="fb-dot local" id="fb-dot"></div>
+        <span id="fb-label">מקומי</span>
+      </div>
+      <button class="btn-primary" id="toggle-form-btn" onclick="toggleForm()">
+        <i data-lucide="plus"></i><span class="hide-mobile">לקוח חדש</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p style="color:#9ca3af;margin-top:16px;font-size:14px;">טוען נתונים...</p>
+</div>
+
+<main id="main" style="display:none;">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <button class="stat-btn active" onclick="setFilter('all',this)">
+      <i data-lucide="layout-list"></i>
+      <span class="stat-count" id="cnt-all">0</span>
+      <span class="stat-label">הכל</span>
+    </button>
+    <button class="stat-btn" onclick="setFilter('waiting',this)">
+      <i data-lucide="clock"></i>
+      <span class="stat-count" id="cnt-waiting">0</span>
+      <span class="stat-label">ממתין</span>
+    </button>
+    <button class="stat-btn" onclick="setFilter('active',this)">
+      <i data-lucide="wrench"></i>
+      <span class="stat-count" id="cnt-active">0</span>
+      <span class="stat-label">בטיפול</span>
+    </button>
+    <button class="stat-btn" onclick="setFilter('done',this)">
+      <i data-lucide="check-circle-2"></i>
+      <span class="stat-count" id="cnt-done">0</span>
+      <span class="stat-label">הושלם</span>
+    </button>
+  </div>
+
+  <!-- FORM CARD -->
+  <div id="form-card" style="display:none;">
+    <div class="form-title" id="form-title-el">
+      <i data-lucide="user-plus"></i> הוספת לקוח חדש
+    </div>
+    <div class="form-grid">
+
+      <div class="fg">
+        <label>שם הלקוח *</label>
+        <input class="inp" id="f-name" placeholder="ישראל ישראלי" />
+      </div>
+      <div class="fg">
+        <label>טלפון *</label>
+        <input class="inp" id="f-phone" placeholder="050-1234567" type="tel" />
+      </div>
+      <div class="fg">
+        <label>תאריך ושעה</label>
+        <input class="inp" id="f-date" type="datetime-local" />
+      </div>
+      <div class="fg">
+        <label>סטטוס</label>
+        <select class="inp" id="f-status">
+          <option value="waiting">ממתין</option>
+          <option value="active">בטיפול</option>
+          <option value="done">הושלם</option>
+          <option value="cancelled">בוטל</option>
+        </select>
+      </div>
+
+      <!-- סוג שירות -->
+      <div class="fg">
+        <label>סוג שירות</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" id="seg-home" onclick="setSeg('service','home')">
+            <i data-lucide="home"></i> ביקור בית
+          </button>
+          <button class="toggle-btn" id="seg-lab" onclick="setSeg('service','lab')">
+            <i data-lucide="flask-conical"></i> מעבדה
+          </button>
         </div>
       </div>
-      <div class="ticket-badges">
-        ${t.priority==='high'?'<span class="badge-pill badge-urgent">🔴 דחוף</span>':''}
-        <span class="badge-pill ${svc.cls}">${svc.label}</span>
-        <span class="badge-pill ${sts.cls}">${sts.label}</span>
+
+      <!-- עדיפות -->
+      <div class="fg">
+        <label>עדיפות</label>
+        <div class="toggle-group">
+          <button class="toggle-btn" id="seg-normal" onclick="setSeg('priority','normal')">
+            <i data-lucide="minus-circle"></i> רגיל
+          </button>
+          <button class="toggle-btn" id="seg-urgent" onclick="setSeg('priority','urgent')">
+            <i data-lucide="alert-circle"></i> דחוף
+          </button>
+        </div>
       </div>
+
+      <!-- סוג מכשיר -->
+      <div class="fg">
+        <label>סוג מכשיר</label>
+        <select class="inp" id="f-device">
+          <option value="">— בחר מכשיר —</option>
+          <option value="מחשב נייד">💻 מחשב נייד</option>
+          <option value="מחשב שולחני">🖥️ מחשב שולחני</option>
+          <option value="מסך">🖵 מסך</option>
+          <option value="מדפסת">🖨️ מדפסת</option>
+          <option value="טאבלט">📱 טאבלט</option>
+          <option value="שרת">🗄️ שרת</option>
+          <option value="רשת / ראוטר">📡 רשת / ראוטר</option>
+          <option value="אחר">🔧 אחר</option>
+        </select>
+      </div>
+
+      <div class="fg full">
+        <label>תיאור התקלה</label>
+        <input class="inp" id="f-issue" placeholder="המחשב לא נדלק, וירוס, מסך שבור..." />
+      </div>
+      <div class="fg full">
+        <label>הערות נוספות</label>
+        <textarea class="inp" id="f-notes" placeholder="סיסמת מחשב, מה ניסו כבר, חומרה שנשלחה..."></textarea>
+      </div>
+
     </div>
-    <div class="ticket-body">
-      <div class="ticket-issue">${esc(t.issue)}</div>
+    <div class="form-actions">
+      <button class="btn-secondary" onclick="closeForm()">ביטול</button>
+      <button class="btn-primary" id="submit-btn" onclick="submitForm()">
+        <i data-lucide="plus"></i> <span id="submit-label">הוסף לתור</span>
+      </button>
     </div>
-    <div class="ticket-meta">
-      ${t.device?`<span>💻 ${esc(t.device)}</span>`:''}
-      ${t.cost?`<span>💰 ₪${Number(t.cost).toLocaleString()}</span>`:''}
-      ${created?`<span>📅 ${created}</span>`:''}
-      ${completed?`<span>✔️ ${completed}</span>`:''}
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <i data-lucide="search"></i>
+    <input class="search-input" id="search" placeholder="חיפוש לפי שם, טלפון, מכשיר או תקלה..." oninput="renderList()" />
+    <button class="clear-btn" id="clear-btn" onclick="clearSearch()" style="display:none;">
+      <i data-lucide="x"></i>
+    </button>
+  </div>
+
+  <!-- LIST -->
+  <div id="list"></div>
+</main>
+
+<!-- DELETE MODAL -->
+<div class="overlay" id="del-overlay" onclick="closeDelModal(event)">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-icon"><i data-lucide="trash-2"></i></div>
+    <div class="modal-title">מחיקת לקוח</div>
+    <div class="modal-text" id="del-text">האם למחוק לקוח זה?</div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeDelModal()">ביטול</button>
+      <button class="btn-delete" onclick="confirmDelete()">מחק</button>
     </div>
-    <div class="ticket-notes">
-      <textarea placeholder="📝 הערות פנימיות..." oninput="saveNotes('${t.id}',this.value)">${esc(t.notes||'')}</textarea>
-    </div>
-    <div class="ticket-actions">${actions}</div>
-  </div>`;
-}
+  </div>
+</div>
 
-// ═══ Stats ═══
-function renderStats(){
-  const total = tickets.length;
-  const waiting = tickets.filter(t=>t.status==='waiting').length;
-  const progress = tickets.filter(t=>t.status==='progress').length;
-  const done = tickets.filter(t=>t.status==='done').length;
-  const cancelled = tickets.filter(t=>t.status==='cancelled').length;
-  const home = tickets.filter(t=>t.service==='home').length;
-  const lab = tickets.filter(t=>t.service==='lab').length;
-  const remote = tickets.filter(t=>t.service==='remote').length;
-  const totalRevenue = tickets.filter(t=>t.status==='done').reduce((s,t)=>s+Number(t.cost||0),0);
+<script>
+/* ════════════════════════════════
+   STATE
+════════════════════════════════ */
+const LS      = 'techq-v2';
+let customers = [];
+let filter    = 'all';
+let editId    = null;
+let delId     = null;
+let fService  = 'home';
+let fPriority = 'normal';
+let showForm  = false;
+let useFirebase = false;
 
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-val">${total}</div><div class="stat-label">סה"כ קריאות</div></div>
-    <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-val">${waiting}</div><div class="stat-label">ממתינות</div></div>
-    <div class="stat-card"><div class="stat-icon">🔧</div><div class="stat-val">${progress}</div><div class="stat-label">בטיפול</div></div>
-    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-val">${done}</div><div class="stat-label">הושלמו</div></div>
-    <div class="stat-card"><div class="stat-icon">💰</div><div class="stat-val">₪${totalRevenue.toLocaleString()}</div><div class="stat-label">הכנסות (הושלמו)</div></div>
-    <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-val">${home}</div><div class="stat-label">אצל הלקוח</div></div>
-    <div class="stat-card"><div class="stat-icon">🖥️</div><div class="stat-val">${lab}</div><div class="stat-label">במעבדה</div></div>
-    <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-val">${remote}</div><div class="stat-label">שליטה מרחוק</div></div>
-  `;
+const STATUS = {
+  waiting:   { label:'ממתין',  color:'#d97706', bg:'rgba(217,119,6,.10)',   icon:'clock'          },
+  active:    { label:'בטיפול', color:'#2563eb', bg:'rgba(37,99,235,.10)',   icon:'wrench'         },
+  done:      { label:'הושלם', color:'#059669', bg:'rgba(5,150,105,.10)',    icon:'check-circle-2' },
+  cancelled: { label:'בוטל',  color:'#6b7280', bg:'rgba(107,114,128,.10)', icon:'x-circle'       },
+};
+const SERVICE = {
+  home: { label:'ביקור בית', color:'#7c3aed', bg:'rgba(124,58,237,.10)', icon:'home'          },
+  lab:  { label:'מעבדה',    color:'#059669', bg:'rgba(5,150,105,.10)',   icon:'flask-conical' },
+};
+const DEVICE_ICON = {
+  'מחשב נייד':    'laptop',
+  'מחשב שולחני':  'monitor',
+  'מסך':          'monitor',
+  'מדפסת':        'printer',
+  'טאבלט':        'tablet-smartphone',
+  'שרת':          'server',
+  'רשת / ראוטר':  'wifi',
+  'אחר':          'wrench',
+};
 
-  drawChart();
-}
-
-function drawChart(){
-  const canvas = document.getElementById('monthlyChart');
-  if(!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width - 56;
-  canvas.height = 240;
-
-  // Gather data per month
-  const months = {};
-  const monthNames = ['ינו','פבר','מרץ','אפר','מאי','יונ','יול','אוג','ספט','אוק','נוב','דצמ'];
-  tickets.forEach(t=>{
-    if(!t.createdAt?.toDate) return;
-    const d = t.createdAt.toDate();
-    const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2,'0')}`;
-    if(!months[key]) months[key]={label:monthNames[d.getMonth()]+' '+d.getFullYear(), count:0, revenue:0};
-    months[key].count++;
-    if(t.status==='done') months[key].revenue += Number(t.cost||0);
+/* ════════════════════════════════
+   FIREBASE LISTENER
+════════════════════════════════ */
+document.addEventListener('fb-ready', () => {
+  useFirebase = true;
+  document.getElementById('fb-dot').className   = 'fb-dot live';
+  document.getElementById('fb-label').textContent = 'Firebase';
+  window.FB.listen(list => {
+    customers = list;
+    renderList();
+    updateCounts();
   });
+});
 
-  const data = Object.values(months).slice(-12);
-  if(!data.length){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.font = '14px Heebo';ctx.fillStyle='#94a3b8';ctx.textAlign='center';
-    ctx.fillText('אין מספיק נתונים להצגת גרף',canvas.width/2,canvas.height/2);
-    return;
-  }
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  try { customers = JSON.parse(localStorage.getItem(LS) || '[]'); } catch { customers = []; }
+  document.getElementById('f-date').value = nowStr();
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('main').style.display    = 'block';
+  setSeg('service', 'home');
+  setSeg('priority', 'normal');
+  renderList();
+  updateCounts();
+});
 
-  const maxCount = Math.max(...data.map(d=>d.count),1);
-  const barW = Math.min(48, (canvas.width - 60) / data.length - 8);
-  const chartH = canvas.height - 50;
-
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  data.forEach((d,i)=>{
-    const x = 30 + i*(barW+8);
-    const h = (d.count / maxCount) * chartH;
-    const y = chartH - h + 10;
-
-    const grad = ctx.createLinearGradient(x,y,x,chartH+10);
-    grad.addColorStop(0,'#3b82f6');
-    grad.addColorStop(1,'#8b5cf6');
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.roundRect(x,y,barW,h,4);
-    ctx.fill();
-
-    ctx.fillStyle='#1e293b';ctx.font='bold 12px Heebo';ctx.textAlign='center';
-    ctx.fillText(d.count,x+barW/2,y-6);
-
-    ctx.fillStyle='#64748b';ctx.font='11px Heebo';
-    ctx.fillText(d.label,x+barW/2,canvas.height-4);
-  });
+function lsSave() {
+  try { localStorage.setItem(LS, JSON.stringify(customers)); } catch {}
 }
+function nowStr() { return new Date().toISOString().slice(0,16); }
+function genId()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
-// ═══ Tabs ═══
-function switchTab(tab){
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-  document.querySelector(`.tab[data-tab="${tab}"]`).classList.add('active');
-  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
-  document.getElementById('panel'+tab.charAt(0).toUpperCase()+tab.slice(1)).classList.add('active');
-}
-
-// ═══ Filters ═══
-function setFilter(f, btn){
-  currentFilter = f;
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  if(btn) btn.classList.add('active');
-  renderQueue();
-}
-
-// ═══ Utils ═══
-function esc(s){
-  const d = document.createElement('div');
-  d.textContent = s||'';
-  return d.innerHTML;
-}
-function hashStr(s){
-  let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return h;
-}
-function formatDate(d){
-  if(!d) return '';
-  return d.toLocaleDateString('he-IL',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-function toast(msg,type='info'){
-  const el = document.createElement('div');
-  el.className = `toast toast-${type}`;
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+let toastT;
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
   el.textContent = msg;
-  document.getElementById('toastContainer').appendChild(el);
-  setTimeout(()=>el.remove(),3000);
+  el.style.background = type === 'error' ? '#dc2626' : '#059669';
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ═══ Keyboard shortcut ═══
-document.addEventListener('keydown', e=>{
-  if(e.ctrlKey && e.key==='n'){
-    e.preventDefault();
-    switchTab('add');
-    document.getElementById('fName').focus();
+/* ════════════════════════════════
+   FILTER
+════════════════════════════════ */
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.stat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+/* ════════════════════════════════
+   FORM
+════════════════════════════════ */
+function toggleForm() {
+  if (showForm && !editId) { closeForm(); return; }
+  editId   = null;
+  showForm = true;
+  document.getElementById('f-name').value   = '';
+  document.getElementById('f-phone').value  = '';
+  document.getElementById('f-issue').value  = '';
+  document.getElementById('f-notes').value  = '';
+  document.getElementById('f-device').value = '';
+  document.getElementById('f-status').value = 'waiting';
+  document.getElementById('f-date').value   = nowStr();
+  setSeg('service','home');
+  setSeg('priority','normal');
+  setFormUI(false);
+  document.getElementById('form-card').style.display = 'block';
+  setToggleBtn(true);
+  document.getElementById('form-card').scrollIntoView({ behavior:'smooth' });
+}
+
+function closeForm() {
+  showForm = false; editId = null;
+  document.getElementById('form-card').style.display = 'none';
+  setToggleBtn(false);
+}
+
+function setToggleBtn(open) {
+  const btn = document.getElementById('toggle-form-btn');
+  btn.innerHTML = open
+    ? '<i data-lucide="x"></i><span class="hide-mobile">סגור</span>'
+    : '<i data-lucide="plus"></i><span class="hide-mobile">לקוח חדש</span>';
+  lucide.createIcons();
+}
+
+function setFormUI(isEdit) {
+  document.getElementById('form-title-el').innerHTML = isEdit
+    ? '<i data-lucide="pencil"></i> עריכת לקוח'
+    : '<i data-lucide="user-plus"></i> הוספת לקוח חדש';
+  document.getElementById('submit-btn').innerHTML = isEdit
+    ? '<i data-lucide="save"></i> <span>שמור שינויים</span>'
+    : '<i data-lucide="plus"></i> <span>הוסף לתור</span>';
+  lucide.createIcons();
+}
+
+function setSeg(type, val) {
+  if (type === 'service') {
+    fService = val;
+    document.getElementById('seg-home').style.cssText =
+      val==='home' ? 'background:rgba(124,58,237,.10);color:#7c3aed;border-color:#7c3aed;' : '';
+    document.getElementById('seg-lab').style.cssText  =
+      val==='lab'  ? 'background:rgba(5,150,105,.10);color:#059669;border-color:#059669;'  : '';
+  } else {
+    fPriority = val;
+    document.getElementById('seg-normal').style.cssText =
+      val==='normal' ? 'background:rgba(37,99,235,.08);color:#2563eb;border-color:#2563eb;'  : '';
+    document.getElementById('seg-urgent').style.cssText =
+      val==='urgent' ? 'background:rgba(220,38,38,.09);color:#dc2626;border-color:#dc2626;' : '';
   }
+}
+
+function openEdit(id) {
+  const c = customers.find(x => x.id === id);
+  if (!c) return;
+  editId = id; showForm = true;
+  document.getElementById('f-name').value   = c.name    || '';
+  document.getElementById('f-phone').value  = c.phone   || '';
+  document.getElementById('f-issue').value  = c.issue   || '';
+  document.getElementById('f-notes').value  = c.notes   || '';
+  document.getElementById('f-device').value = c.device  || '';
+  document.getElementById('f-status').value = c.status  || 'waiting';
+  document.getElementById('f-date').value   = (c.date || c.createdAt || '').slice(0,16);
+  setSeg('service',  c.service  || 'home');
+  setSeg('priority', c.priority || 'normal');
+  setFormUI(true);
+  document.getElementById('form-card').style.display = 'block';
+  setToggleBtn(true);
+  document.getElementById('form-card').scrollIntoView({ behavior:'smooth' });
+}
+
+async function submitForm() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  if (!name || !phone) { toast('שם וטלפון הם שדות חובה','error'); return; }
+
+  const data = {
+    name, phone,
+    issue:    document.getElementById('f-issue').value.trim(),
+    notes:    document.getElementById('f-notes').value.trim(),
+    device:   document.getElementById('f-device').value,
+    status:   document.getElementById('f-status').value,
+    date:     document.getElementById('f-date').value,
+    service:  fService,
+    priority: fPriority,
+  };
+
+  if (useFirebase) {
+    if (editId) { await window.FB.update(editId, data); toast('הלקוח עודכן בהצלחה'); }
+    else        { await window.FB.add(data);            toast('לקוח נוסף בהצלחה');   }
+    // Firebase listener מעדכן את הרשימה
+  } else {
+    if (editId) {
+      customers = customers.map(c => c.id === editId ? { ...c, ...data } : c);
+      toast('הלקוח עודכן בהצלחה');
+    } else {
+      customers.unshift({ ...data, id: genId(), createdAt: new Date().toISOString() });
+      toast('לקוח נוסף בהצלחה');
+    }
+    lsSave(); renderList(); updateCounts();
+  }
+  closeForm();
+}
+
+/* ════════════════════════════════
+   STATUS
+════════════════════════════════ */
+async function changeStatus(id, status) {
+  if (useFirebase) {
+    await window.FB.update(id, { status });
+  } else {
+    customers = customers.map(c => c.id === id ? { ...c, status } : c);
+    lsSave(); renderList(); updateCounts();
+  }
+}
+
+/* ════════════════════════════════
+   DELETE
+════════════════════════════════ */
+function askDelete(id, name) {
+  delId = id;
+  document.getElementById('del-text').innerHTML =
+    `האם למחוק את <strong>${esc(name)}</strong>? פעולה זו לא ניתנת לביטול.`;
+  document.getElementById('del-overlay').classList.add('open');
+}
+function closeDelModal(e) {
+  if (e && e.target !== document.getElementById('del-overlay')) return;
+  document.getElementById('del-overlay').classList.remove('open');
+  delId = null;
+}
+async function confirmDelete() {
+  if (!delId) return;
+  if (useFirebase) {
+    await window.FB.delete(delId);
+  } else {
+    customers = customers.filter(c => c.id !== delId);
+    lsSave(); renderList(); updateCounts();
+  }
+  document.getElementById('del-overlay').classList.remove('open');
+  toast('הלקוח נמחק');
+  delId = null;
+}
+
+/* ════════════════════════════════
+   SEARCH
+════════════════════════════════ */
+function clearSearch() {
+  document.getElementById('search').value = '';
+  document.getElementById('clear-btn').style.display = 'none';
+  renderList();
+}
+
+/* ════════════════════════════════
+   COUNTS
+════════════════════════════════ */
+function updateCounts() {
+  document.getElementById('cnt-all').textContent     = customers.length;
+  document.getElementById('cnt-waiting').textContent = customers.filter(c=>c.status==='waiting').length;
+  document.getElementById('cnt-active').textContent  = customers.filter(c=>c.status==='active').length;
+  document.getElementById('cnt-done').textContent    = customers.filter(c=>c.status==='done').length;
+}
+
+/* ════════════════════════════════
+   RENDER
+════════════════════════════════ */
+function renderList() {
+  const q  = (document.getElementById('search').value || '').trim().toLowerCase();
+  const cb = document.getElementById('clear-btn');
+  cb.style.display = q ? 'flex' : 'none';
+
+  const list = customers.filter(c => {
+    const mf = filter === 'all' || c.status === filter;
+    const mq = !q || [c.name,c.phone,c.issue,c.notes,c.device].join(' ').toLowerCase().includes(q);
+    return mf && mq;
+  });
+
+  const el = document.getElementById('list');
+
+  if (list.length === 0) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon"><i data-lucide="${q?'search-x':'inbox'}"></i></div>
+        <p class="empty-text">${q ? 'לא נמצאו תוצאות לחיפוש' : 'אין לקוחות עדיין'}</p>
+        ${!q ? `<button class="btn-primary" onclick="toggleForm()" style="margin:0 auto;">
+          <i data-lucide="plus"></i> הוסף לקוח ראשון</button>` : ''}
+      </div>`;
+    lucide.createIcons(); return;
+  }
+
+  el.innerHTML = list.map(c => {
+    const st     = STATUS[c.status]   || STATUS.waiting;
+    const sv     = SERVICE[c.service] || SERVICE.home;
+    const urgent = c.priority === 'urgent';
+    const devIcon = DEVICE_ICON[c.device] || 'cpu';
+    const dateStr = fmtDate(c.date || c.createdAt);
+
+    const nextBtn = c.status === 'waiting'
+      ? `<button class="act-btn" onclick="changeStatus('${c.id}','active')" title="העבר לטיפול"><i data-lucide="play-circle"></i></button>`
+      : c.status === 'active'
+      ? `<button class="act-btn green" onclick="changeStatus('${c.id}','done')" title="סמן כהושלם"><i data-lucide="check-circle-2"></i></button>`
+      : c.status === 'done'
+      ? `<button class="act-btn" style="opacity:.55" onclick="changeStatus('${c.id}','waiting')" title="החזר לתור"><i data-lucide="rotate-ccw"></i></button>`
+      : '';
+
+    return `
+    <div class="card${urgent?' urgent':''}">
+      <div class="card-top">
+        <div class="card-left">
+          <div class="card-name">
+            ${urgent ? '<div class="urgent-dot"></div>' : ''}
+            ${esc(c.name)}
+          </div>
+          <a class="card-phone" href="tel:${esc(c.phone)}">
+            <i data-lucide="phone"></i>${esc(c.phone)}
+          </a>
+        </div>
+        <div class="card-badges">
+          <span class="badge" style="background:${st.bg};color:${st.color};">
+            <i data-lucide="${st.icon}"></i>${st.label}
+          </span>
+          <span class="badge" style="background:${sv.bg};color:${sv.color};">
+            <i data-lucide="${sv.icon}"></i>${sv.label}
+          </span>
+        </div>
+      </div>
+
+      ${c.device ? `
+      <div class="card-device">
+        <i data-lucide="${devIcon}"></i>${esc(c.device)}
+      </div>` : ''}
+
+      ${c.issue ? `<div class="card-issue"><i data-lucide="wrench"></i>${esc(c.issue)}</div>` : ''}
+      ${c.notes ? `<div class="card-notes"><i data-lucide="sticky-note"></i>${esc(c.notes)}</div>` : ''}
+
+      <div class="card-bottom">
+        <span class="card-date"><i data-lucide="calendar"></i>${dateStr}</span>
+        <div class="card-actions">
+          ${nextBtn}
+          <button class="act-btn" onclick="openEdit('${c.id}')" title="עריכה"><i data-lucide="pencil"></i></button>
+          <button class="act-btn red" onclick="askDelete('${c.id}','${esc(c.name)}')" title="מחיקה"><i data-lucide="trash-2"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  lucide.createIcons();
+}
+
+function fmtDate(v) {
+  if (!v) return '';
+  return new Date(v).toLocaleString('he-IL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeForm(); closeDelModal(); }
 });
 </script>
 </body>
