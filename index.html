@@ -8,12 +8,7 @@
 <script src="https://unpkg.com/lucide@0.441.0/dist/umd/lucide.js"></script>
 
 <!-- ═══════════════════════════════════════════════════════════
-     🔥 FIREBASE CONFIGURATION
-     1. היכנס ל: https://console.firebase.google.com
-     2. צור פרויקט → הפעל Firestore Database
-     3. הגדרות פרויקט → העתק את ה-firebaseConfig
-     4. הדבק את הפרטים כאן למטה במקום ה-YOUR_...
-     ═══════════════════════════════════════════════════════════ -->
+          ═══════════════════════════════════════════════════════════ -->
 <script type="module">
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore,
@@ -586,7 +581,12 @@ window.addEventListener('DOMContentLoaded', () => {
 function lsSave() {
   try { localStorage.setItem(LS, JSON.stringify(customers)); } catch {}
 }
-function nowStr() { return new Date().toISOString().slice(0,16); }
+function nowStr() {
+  const now = new Date();
+  const il = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+  const pad = n => String(n).padStart(2,'0');
+  return `${il.getFullYear()}-${pad(il.getMonth()+1)}-${pad(il.getDate())}T${pad(il.getHours())}:${pad(il.getMinutes())}`;
+}
 function genId()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
 
 /* ════════════════════════════════
